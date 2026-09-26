@@ -6,6 +6,7 @@ import PrinciplesSection from "@/components/PrinciplesSection";
 import RecentActivitiesSection from "@/components/RecentActivitiesSection";
 import StructureSection from "@/components/StructureSection";
 import MembershipSection from "@/components/MembershipSection";
+import ContactEmailSection from "@/components/ContactEmailSection";
 import Footer from "@/components/Footer";
 
 export default function Home() {
@@ -19,6 +20,7 @@ export default function Home() {
       <RecentActivitiesSection />
       <StructureSection />
       <MembershipSection />
+      <ContactEmailSection />
       <Footer />
     </main>
   );
