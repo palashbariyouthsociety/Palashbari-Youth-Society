@@ -13,6 +13,7 @@ import {
   AlertOctagon,
   Check,
   X,
+  ExternalLink,
 } from 'lucide-react';
 
 export default function MembershipSection() {
@@ -211,6 +212,35 @@ export default function MembershipSection() {
               </ul>
             </div>
           </div>
+        </div>
+
+        {/* Direct Google Form Application Banner */}
+        <div className="mt-12 p-6 sm:p-8 rounded-3xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white shadow-xl shadow-blue-500/20 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="space-y-1.5 text-center md:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-amber-300 text-xs font-semibold backdrop-blur-sm mb-1">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>{t('সদস্যপদ আহ্বান', 'Join Our Movement')}</span>
+            </div>
+            <h3 className="text-xl sm:text-2xl font-bold">
+              {t('পলাশবাড়ী ইয়াং সোসাইটির সদস্য হতে চান?', 'Ready to Become a Member?')}
+            </h3>
+            <p className="text-blue-100 text-xs sm:text-sm max-w-xl">
+              {t(
+                'আমাদের অফিসিয়াল গুগল ফ্রমে সরাসরি তথ্য পূরণ করে আবেদন সম্পন্ন করুন। কার্যকরী পরিষদ যাচাইপূর্বক আপনার সাথে যোগাযোগ করবে।',
+                'Complete your application directly via our official Google Form. The Executive Council will contact you upon review.'
+              )}
+            </p>
+          </div>
+
+          <a
+            href="https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group px-7 py-3.5 bg-white text-blue-700 hover:bg-slate-50 font-bold text-sm sm:text-base rounded-full shadow-lg transition-all hover:scale-105 active:scale-95 flex items-center justify-center gap-2 shrink-0 whitespace-nowrap"
+          >
+            <span>{t('গুগল ফ্রমে সরাসরি আবেদন করুন', 'Apply via Google Form')}</span>
+            <ExternalLink className="w-4 h-4 text-blue-600 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+          </a>
         </div>
       </div>
     </section>

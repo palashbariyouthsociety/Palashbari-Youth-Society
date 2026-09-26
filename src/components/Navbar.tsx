@@ -73,9 +73,11 @@ export default function Navbar() {
               <span>{lang === 'bn' ? 'ENGLISH' : 'বাংলা'}</span>
             </button>
 
-            {/* Registration CTA Button */}
+            {/* Registration CTA Button - Opens Google Form in new tab */}
             <a
-              href="#register"
+              href="https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform"
+              target="_blank"
+              rel="noopener noreferrer"
               className="hidden sm:inline-flex items-center gap-2 px-4.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-sm rounded-full shadow-md shadow-blue-500/20 transition-all duration-200 hover:scale-[1.02] active:scale-95"
             >
               <UserPlus className="w-4 h-4 text-amber-300" />
@@ -109,7 +111,9 @@ export default function Navbar() {
               ))}
               <div className="pt-3 border-t border-slate-100">
                 <a
-                  href="#register"
+                  href="https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={() => setMenuOpen(false)}
                   className="flex items-center justify-center gap-2 w-full py-2.5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold text-sm rounded-xl shadow-md shadow-blue-600/20"
                 >

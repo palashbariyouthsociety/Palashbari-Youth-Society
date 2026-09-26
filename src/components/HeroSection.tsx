@@ -85,7 +85,9 @@ export default function HeroSection() {
         {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 max-w-2xl mx-auto">
           <a
-            href="#register"
+            href="https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform"
+            target="_blank"
+            rel="noopener noreferrer"
             className="group w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm sm:text-base rounded-full shadow-lg shadow-blue-500/25 border border-blue-400/30 transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 whitespace-nowrap"
           >
             <UserPlus className="w-4 h-4 text-amber-300 shrink-0" />

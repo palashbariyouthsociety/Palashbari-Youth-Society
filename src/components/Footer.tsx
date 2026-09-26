@@ -57,11 +57,17 @@ export default function Footer() {
                 { href: '#principles', label: t('৬টি মূলনীতি', '6 Core Principles') },
                 { href: '#structure', label: t('সাংগঠনিক কাঠামো ও পদাবলি', 'Structure & Councils') },
                 { href: '#membership', label: t('সদস্যপদ ও ক্যাটাগরি', 'Membership Guidelines') },
-                { href: '#register', label: t('অনলাইন সদস্যপদ ফরম', 'Online Registration') },
+                {
+                  href: 'https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform',
+                  label: t('সদস্যপদ আবেদন (গুগল ফরম)', 'Membership Form (Google)'),
+                  isExternal: true,
+                },
               ].map((link) => (
                 <li key={link.href}>
                   <a
                     href={link.href}
+                    target={link.isExternal ? '_blank' : undefined}
+                    rel={link.isExternal ? 'noopener noreferrer' : undefined}
                     className="text-slate-400 hover:text-amber-300 text-sm transition-colors flex items-center gap-2 group"
                   >
                     <ChevronRight className="w-3.5 h-3.5 text-slate-600 group-hover:text-amber-400 group-hover:translate-x-0.5 transition-all" />
