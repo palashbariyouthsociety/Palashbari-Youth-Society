@@ -56,7 +56,6 @@ export default function RecentActivitiesSection() {
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
   const fetchActivities = useCallback(async () => {
-    setLoading(true);
     try {
       const res = await fetch(`/api/activities?_t=${Date.now()}`, {
         cache: 'no-store',
@@ -80,7 +79,9 @@ export default function RecentActivitiesSection() {
   }, []);
 
   useEffect(() => {
-    fetchActivities();
+    void (async () => {
+      await fetchActivities();
+    })();
 
     // Auto-sync polling every 25 seconds
     const interval = setInterval(() => {
@@ -314,7 +315,6 @@ export default function RecentActivitiesSection() {
         <div className="grid lg:grid-cols-2 gap-8 items-stretch">
           {filteredActivities.map((act) => {
             const isExpanded = expandedId === act.id;
-            const descShouldTruncate = act.description.length > 220;
 
             return (
               <div

@@ -11,7 +11,6 @@ import {
   ShieldCheck,
   Info,
   Sparkles,
-  ArrowRight,
 } from 'lucide-react';
 
 interface DonationModalProps {

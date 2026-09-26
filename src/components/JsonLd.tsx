@@ -1,5 +1,8 @@
 export default function JsonLd() {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://polashbari-young-society.vercel.app';
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    process.env.NEXT_PUBLIC_APP_URL ||
+    'https://palashbari-youth-society.vercel.app';
 
   const organizationSchema = {
     '@context': 'https://schema.org',
@@ -7,11 +10,14 @@ export default function JsonLd() {
     '@id': `${siteUrl}/#organization`,
     name: 'পলাশবাড়ী ইয়াং সোসাইটি',
     alternateName: [
+      'Palashbari Youth Society',
+      'Polashbari Youth Society',
       'Polashbari Young Society',
       'PYS',
       'Palashbari Young Society',
       'পলাশবাড়ি ইয়াং সোসাইটি',
       'পলাশবাড়ী ইয়ুথ সোসাইটি',
+      'পলাশবাড়ি ইয়ুথ সোসাইটি',
     ],
     url: siteUrl,
     logo: `${siteUrl}/logo.jpg`,
@@ -64,8 +70,11 @@ export default function JsonLd() {
     '@type': 'WebSite',
     '@id': `${siteUrl}/#website`,
     url: siteUrl,
-    name: 'পলাশবাড়ী ইয়াং সোসাইটি | Polashbari Young Society',
-    alternateName: 'Polashbari Young Society Official Website',
+    name: 'পলাশবাড়ী ইয়াং সোসাইটি | Palashbari Youth Society',
+    alternateName: [
+      'Palashbari Youth Society Official Website',
+      'Polashbari Young Society Official Website',
+    ],
     publisher: {
       '@id': `${siteUrl}/#organization`,
     },

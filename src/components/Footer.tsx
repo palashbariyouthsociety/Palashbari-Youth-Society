@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Copy,
   Check,
-  ExternalLink,
 } from 'lucide-react';
 
 export default function Footer() {

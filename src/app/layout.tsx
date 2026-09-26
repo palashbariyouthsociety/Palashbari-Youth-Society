@@ -7,7 +7,10 @@ import "./globals.css";
 import { LanguageProvider } from "@/context/LanguageContext";
 import JsonLd from "@/components/JsonLd";
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://polashbari-young-society.vercel.app";
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  "https://palashbari-youth-society.vercel.app";
 
 export const viewport: Viewport = {
   themeColor: "#f8fafc",
@@ -19,16 +22,17 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "পলাশবাড়ী ইয়াং সোসাইটি | Polashbari Young Society (বীরগঞ্জ, দিনাজপুর)",
+    default: "পলাশবাড়ী ইয়াং সোসাইটি | Palashbari Youth Society (বীরগঞ্জ, দিনাজপুর)",
     template: "%s | পলাশবাড়ী ইয়াং সোসাইটি",
   },
   description:
-    "পলাশবাড়ী ইয়াং সোসাইটি — একটি অরাজনৈতিক, অলাভজনক, স্বেচ্ছাসেবী ও সামাজিক সংগঠন। স্থাপিতঃ ২০২২ খ্রিঃ। ঠিকানাঃ পলাশবাড়ী, বীরগঞ্জ, দিনাজপুর। Polashbari Young Society is a voluntary social and humanitarian youth organization dedicated to community development in Birganj, Dinajpur.",
+    "পলাশবাড়ী ইয়াং সোসাইটি — একটি অরাজনৈতিক, অলাভজনক, স্বেচ্ছাসেবী ও সামাজিক সংগঠন। স্থাপিতঃ ২০২২ খ্রিঃ। ঠিকানাঃ পলাশবাড়ী, বীরগঞ্জ, দিনাজপুর। Palashbari Youth Society is a voluntary social and humanitarian youth organization dedicated to community development in Birganj, Dinajpur.",
   keywords: [
     // বাংলা কি-ওয়ার্ডসমূহ
     "পলাশবাড়ী ইয়াং সোসাইটি",
     "পলাশবাড়ি ইয়াং সোসাইটি",
     "পলাশবাড়ী ইয়ুথ সোসাইটি",
+    "পলাশবাড়ি ইয়ুথ সোসাইটি",
     "পলাশবাড়ী সামাজিক সংগঠন",
     "পলাশবাড়ী বীরগঞ্জ",
     "বীরগঞ্জ দিনাজপুর সামাজিক সংগঠন",
@@ -40,19 +44,24 @@ export const metadata: Metadata = {
     "মানবতার সেবায় পলাশবাড়ী",
 
     // English keywords & variations
-    "Polashbari Young Society",
+    "Palashbari Youth Society",
+    "Polashbari Youth Society",
     "Palashbari Young Society",
+    "Polashbari Young Society",
+    "PYS",
     "PYS Birganj",
+    "Palashbari Youth Society Dinajpur",
     "Polashbari Young Society Dinajpur",
     "Polashbari Voluntary Organization",
+    "Palashbari Voluntary Organization",
     "Polashbari NGO Bangladesh",
     "Birganj Youth Organization",
     "Dinajpur Social Welfare Organization",
     "Polashbari Youth Club",
-    "Polashbari Young Society Registration",
+    "Palashbari Youth Society Registration",
   ],
   authors: [{ name: "পলাশবাড়ী ইয়াং সোসাইটি", url: siteUrl }],
-  creator: "পলাশবাড়ী ইয়াং সোসাইটি (Polashbari Young Society)",
+  creator: "পলাশবাড়ী ইয়াং সোসাইটি (Palashbari Youth Society)",
   publisher: "পলাশবাড়ী ইয়াং সোসাইটি",
   applicationName: "পলাশবাড়ী ইয়াং সোসাইটি",
   generator: "Next.js",
@@ -70,11 +79,11 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "পলাশবাড়ী ইয়াং সোসাইটি | Polashbari Young Society",
+    title: "পলাশবাড়ী ইয়াং সোসাইটি | Palashbari Youth Society",
     description:
       "এসো যুবক, কাজ করি— মানবতার সমাজ গড়ি। পলাশবাড়ী, বীরগঞ্জ, দিনাজপুরে প্রতিষ্ঠিত একটি মানবকল্যাণমুখী অরাজনৈতিক ও স্বেচ্ছাসেবী সামাজিক সংগঠন।",
     url: siteUrl,
-    siteName: "পলাশবাড়ী ইয়াং সোসাইটি (Polashbari Young Society)",
+    siteName: "পলাশবাড়ী ইয়াং সোসাইটি (Palashbari Youth Society)",
     locale: "bn_BD",
     alternateLocale: ["en_US"],
     type: "website",
@@ -83,13 +92,13 @@ export const metadata: Metadata = {
         url: "/logo.jpg",
         width: 800,
         height: 800,
-        alt: "পলাশবাড়ী ইয়াং সোসাইটি অফিসিয়াল লোগো (Polashbari Young Society Logo)",
+        alt: "পলাশবাড়ী ইয়াং সোসাইটি অফিসিয়াল লোগো (Palashbari Youth Society Logo)",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "পলাশবাড়ী ইয়াং সোসাইটি | Polashbari Young Society",
+    title: "পলাশবাড়ী ইয়াং সোসাইটি | Palashbari Youth Society",
     description:
       "একটি অরাজনৈতিক, অলাভজনক, স্বেচ্ছাসেবী ও সামাজিক সংগঠন। পলাশবাড়ী, বীরগঞ্জ, দিনাজপুর। স্থাপিতঃ ২০২২।",
     images: ["/logo.jpg"],
@@ -113,6 +122,9 @@ export const metadata: Metadata = {
       { url: "/favicon.ico", sizes: "any" },
     ],
     apple: [{ url: "/logo.jpg", sizes: "180x180" }],
+  },
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
   },
   category: "Non-Governmental Organization & Social Welfare",
 };

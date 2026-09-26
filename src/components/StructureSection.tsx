@@ -18,7 +18,6 @@ import {
   Compass,
   FileText,
   Megaphone,
-  Heart,
   GraduationCap,
   Trophy,
   Laptop,
