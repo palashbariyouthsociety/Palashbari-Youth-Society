@@ -121,7 +121,11 @@ export function parseDriveImages(mediaStr: string): ActivityImage[] {
 
 export function detectCategory(title: string, desc: string): { bn: string; en: string } {
   const combined = `${title} ${desc}`.toLowerCase();
+  const titleLower = title.toLowerCase();
 
+  if (titleLower.includes('সভা') || titleLower.includes('বৈঠক') || titleLower.includes('আলোচনা')) {
+    return { bn: 'সংগঠনিক ও সাধারণ সভা', en: 'Meeting & Governance' };
+  }
   if (combined.includes('বৃক্ষ') || combined.includes('পরিবেশ') || combined.includes('গাছ') || combined.includes('চারা')) {
     return { bn: 'পরিবেশ ও বৃক্ষরোপণ', en: 'Environment & Afforestation' };
   }
@@ -182,19 +186,7 @@ export function parseCSV(text: string): string[][] {
   return rows;
 }
 
-export function isFutureOrOngoingDate(dateStr: string, title?: string, desc?: string): boolean {
-  const combined = `${title || ''} ${desc || ''}`.toLowerCase();
-  if (
-    combined.includes('আসন্ন') ||
-    combined.includes('আগামী') ||
-    combined.includes('চলমান') ||
-    combined.includes('তহবিল') ||
-    combined.includes('সাহায্য চাই') ||
-    combined.includes('অনুদান')
-  ) {
-    return true;
-  }
-
+export function isFutureOrOngoingDate(dateStr: string): boolean {
   if (!dateStr) return false;
 
   try {
@@ -202,18 +194,23 @@ export function isFutureOrOngoingDate(dateStr: string, title?: string, desc?: st
     let eventDate: Date | null = null;
 
     if (parts.length === 3) {
-      if (parts[0].length === 4) {
-        // YYYY-MM-DD
-        const year = parseInt(parts[0], 10);
-        const month = parseInt(parts[1], 10) - 1;
-        const day = parseInt(parts[2], 10);
-        eventDate = new Date(year, month, day, 23, 59, 59);
-      } else {
-        // MM/DD/YYYY or M/D/YYYY
-        const month = parseInt(parts[0], 10) - 1;
-        const day = parseInt(parts[1], 10);
-        const year = parseInt(parts[2], 10);
-        eventDate = new Date(year, month, day, 23, 59, 59);
+      const p0 = parseInt(parts[0], 10);
+      const p1 = parseInt(parts[1], 10);
+      const p2 = parseInt(parts[2], 10);
+
+      if (!isNaN(p0) && !isNaN(p1) && !isNaN(p2)) {
+        if (parts[0].length === 4) {
+          // YYYY-MM-DD
+          eventDate = new Date(p0, p1 - 1, p2, 23, 59, 59);
+        } else if (p0 > 12 && p1 <= 12) {
+          // DD/MM/YYYY
+          const year = p2 < 100 ? 2000 + p2 : p2;
+          eventDate = new Date(year, p1 - 1, p0, 23, 59, 59);
+        } else {
+          // MM/DD/YYYY
+          const year = p2 < 100 ? 2000 + p2 : p2;
+          eventDate = new Date(year, p0 - 1, p1, 23, 59, 59);
+        }
       }
     } else {
       eventDate = new Date(dateStr);
@@ -221,34 +218,139 @@ export function isFutureOrOngoingDate(dateStr: string, title?: string, desc?: st
 
     if (!eventDate || isNaN(eventDate.getTime())) return false;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
-    return eventDate.getTime() >= today.getTime();
+    // Check if event is on or after the current time
+    const now = new Date();
+    return eventDate.getTime() > now.getTime();
   } catch {
     return false;
   }
 }
 
+export const KNOWN_CATEGORIES: Record<string, string> = {
+  'পরিবেশ ও বৃক্ষরোপণ': 'Environment & Afforestation',
+  'বৃক্ষরোপণ ও পরিবেশ': 'Environment & Afforestation',
+  'পরিবেশ ও জলবায়ু': 'Environment & Climate',
+  'অবকাঠামো ও সমাজসেবা': 'Infrastructure & Social Work',
+  'অবকাঠামো উন্নয়ন': 'Infrastructure Development',
+  'রাস্তা ও জনপথ উন্নয়ন': 'Roads & Infrastructure',
+  'সংগঠনিক ও সাধারণ সভা': 'Meeting & General Assembly',
+  'সাধারণ সভা ও আলোচনা': 'General Meeting & Discussion',
+  'সাংগঠনিক সভা': 'Organizational Meeting',
+  'স্বাস্থ্য ও রক্তদান': 'Health & Blood Donation',
+  'রক্তদান কর্মসূচি': 'Blood Donation Drive',
+  'বিনামূল্যে চিকিৎসা ক্যাম্প': 'Free Medical Camp',
+  'শিক্ষা ও মেধা বিকাশ': 'Education & Youth Development',
+  'শিক্ষা ও পাঠাগার': 'Education & Library',
+  'মেধাবৃত্তি ও সম্মাননা': 'Scholarship & Award',
+  'মানবিক সহায়তা ও ত্রাণ': 'Humanitarian Aid & Relief',
+  'শীতবস্ত্র বিতরণ': 'Winter Clothes Distribution',
+  'ত্রাণ ও পুনর্বাসন': 'Relief & Rehabilitation',
+  'ক্রীড়া ও সাংস্কৃতিক উৎসব': 'Sports & Culture',
+  'যুব উন্নয়ন ও কর্মশালা': 'Youth Development & Workshop',
+  'সামাজিক সচেতনতা': 'Social Awareness',
+};
+
+export function resolveCategory(
+  rawCategory: string | undefined,
+  title: string,
+  desc: string
+): { bn: string; en: string } {
+  const trimmed = rawCategory?.trim();
+  if (trimmed && trimmed.length > 0) {
+    if (KNOWN_CATEGORIES[trimmed]) {
+      return { bn: trimmed, en: KNOWN_CATEGORIES[trimmed] };
+    }
+    for (const [key, val] of Object.entries(KNOWN_CATEGORIES)) {
+      if (trimmed.includes(key) || key.includes(trimmed)) {
+        return { bn: trimmed, en: val };
+      }
+    }
+    return {
+      bn: trimmed,
+      en: trimmed,
+    };
+  }
+
+  return detectCategory(title, desc);
+}
+
+interface ColumnIndices {
+  title: number;
+  date: number;
+  description: number;
+  media: number;
+  category: number;
+}
+
+export function resolveColumnIndices(headerRow: string[]): ColumnIndices {
+  const indices: ColumnIndices = {
+    title: -1,
+    date: -1,
+    description: -1,
+    media: -1,
+    category: -1,
+  };
+
+  headerRow.forEach((rawHeader, idx) => {
+    const h = rawHeader.toLowerCase().trim();
+    if (
+      indices.title === -1 &&
+      (h.includes('শিরোনাম') || h.includes('title') || h.includes('headline') || h.includes('কার্যক্রমের নাম'))
+    ) {
+      indices.title = idx;
+    } else if (
+      indices.date === -1 &&
+      (h.includes('তারিখ') || h.includes('date') || h.includes('time'))
+    ) {
+      indices.date = idx;
+    } else if (
+      indices.description === -1 &&
+      (h.includes('বিবরণ') || h.includes('desc') || h.includes('report') || h.includes('story') || h.includes('বিস্তারিত'))
+    ) {
+      indices.description = idx;
+    } else if (
+      indices.media === -1 &&
+      (h.includes('মিডিয়া') || h.includes('মিডিয়া') || h.includes('media') || h.includes('ডকুমেন্টেশন') || h.includes('ছবি') || h.includes('image') || h.includes('drive'))
+    ) {
+      indices.media = idx;
+    } else if (
+      indices.category === -1 &&
+      (h.includes('ধরন') || h.includes('ধরণ') || h.includes('ক্যাটেগরি') || h.includes('category') || h.includes('type') || h.includes('বিভাগ'))
+    ) {
+      indices.category = idx;
+    }
+  });
+
+  return {
+    title: indices.title !== -1 ? indices.title : 0,
+    date: indices.date !== -1 ? indices.date : 1,
+    description: indices.description !== -1 ? indices.description : 2,
+    media: indices.media !== -1 ? indices.media : 3,
+    category: indices.category !== -1 ? indices.category : 4,
+  };
+}
+
 export function transformRowsToActivities(rows: string[][]): ActivityItem[] {
   if (!rows || rows.length <= 1) return [];
 
-  // Exclude header row
+  const headerRow = rows[0];
+  const cols = resolveColumnIndices(headerRow);
   const dataRows = rows.slice(1);
 
   return dataRows
     .map((row, idx) => {
-      const title = row[0]?.trim() || '';
-      const date = row[1]?.trim() || '';
-      const description = row[2]?.trim() || '';
-      const mediaStr = row[3]?.trim() || '';
+      const title = row[cols.title]?.trim() || '';
+      const date = row[cols.date]?.trim() || '';
+      const description = row[cols.description]?.trim() || '';
+      const mediaStr = row[cols.media]?.trim() || '';
+      const rawCategory = row[cols.category]?.trim() || '';
 
       if (!title) return null;
 
       const dateObj = formatDate(date);
-      const category = detectCategory(title, description);
+      const category = resolveCategory(rawCategory, title, description);
       const images = parseDriveImages(mediaStr);
-      const isFuture = isFutureOrOngoingDate(date, title, description);
+      const isFuture = isFutureOrOngoingDate(date);
 
       return {
         id: `activity-${idx + 1}`,
@@ -291,11 +393,26 @@ export const FALLBACK_ACTIVITIES: ActivityItem[] = [
     formattedDateEn: 'Sep 15, 2026',
     description:
       'পলাশবাড়ী ইয়াং সোসাইটির উদ্যোগ এবং স্থানীয় যুবসমাজের সার্বিক সহায়তায় এলাকার খানাখন্দে ভরা রাস্তার সংস্কার ও উন্নয়ন কাজ সফলভাবে সম্পন্ন হয়েছে। উক্ত রাস্তাটি দীর্ঘদিন ধরে চলাচলের একদম অনুপযোগী হয়ে পড়েছিল। আমাদের স্বেচ্ছাসেবী দলের কঠোর পরিশ্রমে রাস্তার বড় বড় গর্তগুলো ইট ও মাটি দিয়ে ভরাট করা হয় এবং রাস্তার দুই পাশের ময়লা-আবর্জনা পরিষ্কার করা হয়। এই উন্নয়নমূলক কাজের ফলে এলাকার প্রায় ২৫০ সাধারণ পথচারী ও যানবাহন এখন নিরাপদে চলাচল করতে পারবেন।',
-    category: 'Infrastructure & Welfare',
+    category: 'Infrastructure & Social Work',
     categoryBn: 'অবকাঠামো ও সমাজসেবা',
     isFuture: false,
     images: parseDriveImages(
       'https://drive.google.com/open?id=1sAFikUaKbDhi8knS4LNrwNK2xZXtdvAE, https://drive.google.com/open?id=1afd3nnnn5-EP-Hc6RTP4t1H81gsim2zw, https://drive.google.com/open?id=11OwzA6TgkPJdpx-wY00VwNfW90LRaj82'
+    ),
+  },
+  {
+    id: 'activity-3',
+    title: 'পলাশবাড়ী ইয়াং সোসাইটির সাধারণ আলোচনা বৈঠক',
+    date: '5/20/2026',
+    formattedDateBn: '২০ মে, ২০২৬',
+    formattedDateEn: 'May 20, 2026',
+    description:
+      'সম্প্রতি সম্পন্ন হওয়া সামাজিক কাজসমূহ (যেমন: রক্তদান, রাস্তা সংস্কার, পরিচ্ছন্নতা বা সাহায্য বিতরণ) নিয়ে আলোচনা।\nবিগত কাজের সফলতা এবং কোথায় আরও ভালো করা যেত সে বিষয়ে মতামত গ্রহণ।\n\nআসন্ন কোনো ইভেন্ট বা সামাজিক কর্মসূচির (যেমন: শীতবস্ত্র বিতরণ, বৃক্ষরোপণ, সচেতনতামূলক ক্যাম্পেইন) খসড়া পরিকল্পনা।\n\nঅর্থ সম্পাদক কর্তৃক বিগত মাসের আয়-ব্যয়ের হিসাব পেশ ও অনুমোদন।\n\nনতুন ফান্ড রাইজিং বা অনুদান সংগ্রহের কৌশল নিয়ে আলোচনা।',
+    category: 'Meeting & General Assembly',
+    categoryBn: 'সংগঠনিক ও সাধারণ সভা',
+    isFuture: false,
+    images: parseDriveImages(
+      'https://drive.google.com/open?id=1VLORq8nRieiTM0nDIfa0UgomnJJI6WQn, https://drive.google.com/open?id=14G4IMzlcmQUSSfk-2qPV8q3CqAVC184Z'
     ),
   },
 ];

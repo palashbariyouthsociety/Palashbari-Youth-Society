@@ -24,6 +24,8 @@ import {
   CheckCircle,
   FileText,
   Heart,
+  Users,
+  GraduationCap,
 } from 'lucide-react';
 import DonationModal from '@/components/DonationModal';
 
@@ -56,7 +58,13 @@ export default function RecentActivitiesSection() {
   const fetchActivities = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/activities', { cache: 'no-store' });
+      const res = await fetch(`/api/activities?_t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          Pragma: 'no-cache',
+        },
+      });
       if (res.ok) {
         const data = await res.json();
         if (data.activities && data.activities.length > 0) {
@@ -73,6 +81,28 @@ export default function RecentActivitiesSection() {
 
   useEffect(() => {
     fetchActivities();
+
+    // Auto-sync polling every 25 seconds
+    const interval = setInterval(() => {
+      fetchActivities();
+    }, 25000);
+
+    // Auto-sync immediately when tab/window becomes active
+    const handleFocus = () => fetchActivities();
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchActivities();
+      }
+    };
+
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [fetchActivities]);
 
   const openLightbox = (activity: ActivityItem, initialIndex = 0) => {
@@ -129,15 +159,51 @@ export default function RecentActivitiesSection() {
     setFailedImages((prev) => ({ ...prev, [imageId]: true }));
   };
 
-  // Get Category Icon
-  const getCategoryIcon = (category: string) => {
-    if (category.includes('Environment') || category.includes('পরিবেশ')) {
-      return <Trees className="w-3.5 h-3.5 text-emerald-600" />;
+  // Dynamic Category Metadata (Icon + Theme Styling)
+  const getCategoryMeta = (catBn = '', catEn = '') => {
+    const text = `${catBn} ${catEn}`.toLowerCase();
+
+    if (text.includes('পরিবেশ') || text.includes('বৃক্ষ') || text.includes('environment')) {
+      return {
+        icon: <Trees className="w-3.5 h-3.5 text-emerald-600" />,
+        badgeClass: 'bg-emerald-50/90 border-emerald-200/90 text-emerald-800',
+      };
     }
-    if (category.includes('Infrastructure') || category.includes('অবকাঠামো')) {
-      return <Hammer className="w-3.5 h-3.5 text-amber-600" />;
+    if (text.includes('অবকাঠামো') || text.includes('সংস্কার') || text.includes('উন্নয়ন') || text.includes('infrastructure')) {
+      return {
+        icon: <Hammer className="w-3.5 h-3.5 text-amber-600" />,
+        badgeClass: 'bg-amber-50/90 border-amber-200/90 text-amber-800',
+      };
     }
-    return <HeartHandshake className="w-3.5 h-3.5 text-blue-600" />;
+    if (text.includes('সভা') || text.includes('বৈঠক') || text.includes('সাংগঠনিক') || text.includes('meeting') || text.includes('assembly')) {
+      return {
+        icon: <Users className="w-3.5 h-3.5 text-indigo-600" />,
+        badgeClass: 'bg-indigo-50/90 border-indigo-200/90 text-indigo-800',
+      };
+    }
+    if (text.includes('রক্ত') || text.includes('চিকিৎসা') || text.includes('স্বাস্থ্য') || text.includes('health') || text.includes('blood')) {
+      return {
+        icon: <HeartHandshake className="w-3.5 h-3.5 text-rose-600" />,
+        badgeClass: 'bg-rose-50/90 border-rose-200/90 text-rose-800',
+      };
+    }
+    if (text.includes('শিক্ষা') || text.includes('মেধা') || text.includes('বই') || text.includes('education')) {
+      return {
+        icon: <GraduationCap className="w-3.5 h-3.5 text-sky-600" />,
+        badgeClass: 'bg-sky-50/90 border-sky-200/90 text-sky-800',
+      };
+    }
+    if (text.includes('ত্রাণ') || text.includes('শীতবস্ত্র') || text.includes('মানবিক') || text.includes('relief')) {
+      return {
+        icon: <HeartHandshake className="w-3.5 h-3.5 text-teal-600" />,
+        badgeClass: 'bg-teal-50/90 border-teal-200/90 text-teal-800',
+      };
+    }
+
+    return {
+      icon: <Sparkles className="w-3.5 h-3.5 text-blue-600" />,
+      badgeClass: 'bg-blue-50/90 border-blue-200/90 text-blue-800',
+    };
   };
 
   // Filter activities
@@ -464,9 +530,9 @@ export default function RecentActivitiesSection() {
                     /* Fallback when no images provided */
                     <div className="h-48 rounded-2xl bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 p-6 flex flex-col justify-between text-white border border-slate-200">
                       <div className="inline-flex p-3 rounded-2xl bg-white/10 w-fit">
-                        {getCategoryIcon(act.category)}
+                        {getCategoryMeta(act.categoryBn, act.category).icon}
                       </div>
-                      <p className="text-sm font-semibold text-blue-200">{t('মাঠপর্যায়ের কার্যক্রম', 'Field Action')}</p>
+                      <p className="text-sm font-semibold text-blue-200">{t(act.categoryBn || 'মাঠপর্যায়ের কার্যক্রম', act.category || 'Field Action')}</p>
                     </div>
                   )}
                 </div>
@@ -481,10 +547,15 @@ export default function RecentActivitiesSection() {
                         <span>{t(act.formattedDateBn, act.formattedDateEn)}</span>
                       </span>
 
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-50/80 border border-blue-200/80 text-blue-800 text-xs font-medium">
-                        {getCategoryIcon(act.category)}
-                        <span>{t(act.categoryBn, act.category)}</span>
-                      </span>
+                      {(() => {
+                        const catMeta = getCategoryMeta(act.categoryBn, act.category);
+                        return (
+                          <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full border text-xs font-semibold shadow-2xs ${catMeta.badgeClass}`}>
+                            {catMeta.icon}
+                            <span>{t(act.categoryBn, act.category)}</span>
+                          </span>
+                        );
+                      })()}
 
                       {act.isFuture && (
                         <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold shadow-xs">
@@ -500,17 +571,19 @@ export default function RecentActivitiesSection() {
                     </h3>
 
                     {/* Description */}
-                    <div className="text-slate-600 text-xs sm:text-sm leading-relaxed whitespace-pre-line">
-                      {descShouldTruncate && !isExpanded
-                        ? `${act.description.slice(0, 220)}...`
-                        : act.description}
+                    <div
+                      className={`text-slate-600 text-xs sm:text-sm leading-relaxed whitespace-pre-line ${
+                        !isExpanded ? 'line-clamp-3 sm:line-clamp-4' : ''
+                      }`}
+                    >
+                      {act.description}
                     </div>
 
                     {/* Read More / Less Toggle */}
-                    {descShouldTruncate && (
+                    {(act.description.length > 160 || act.description.split('\n').length > 3) && (
                       <button
                         onClick={() => setExpandedId(isExpanded ? null : act.id)}
-                        className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1"
+                        className="mt-2 text-xs font-semibold text-blue-600 hover:text-blue-700 inline-flex items-center gap-1 transition-colors"
                       >
                         <span>{isExpanded ? t('সংক্ষিপ্ত করুন ▲', 'Read Less ▲') : t('সম্পূর্ণ বিবরণ পড়ুন ▼', 'Read More ▼')}</span>
                       </button>
