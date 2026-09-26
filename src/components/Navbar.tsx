@@ -19,6 +19,7 @@ export default function Navbar() {
   const navLinks = [
     { href: '#about', label: t('পরিচিতি', 'About') },
     { href: '#mission', label: t('লক্ষ্য ও উদ্দেশ্য', 'Mission') },
+    { href: '#activities', label: t('কার্যক্রম', 'Activities') },
     { href: '#principles', label: t('মূলনীতি', 'Principles') },
     { href: '#structure', label: t('কাঠামো', 'Structure') },
     { href: '#membership', label: t('সদস্যপদ', 'Membership') },

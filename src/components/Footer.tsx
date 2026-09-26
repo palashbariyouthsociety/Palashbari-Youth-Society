@@ -54,6 +54,7 @@ export default function Footer() {
               {[
                 { href: '#about', label: t('সংগঠন পরিচিতি ও আদর্শ', 'About & Nature') },
                 { href: '#mission', label: t('১৫টি লক্ষ্য ও উদ্দেশ্য', '15 Mission Objectives') },
+                { href: '#activities', label: t('সাম্প্রতিক কার্যক্রম ও মাঠপর্যায়ের কাজ', 'Recent Field Activities') },
                 { href: '#principles', label: t('৬টি মূলনীতি', '6 Core Principles') },
                 { href: '#structure', label: t('সাংগঠনিক কাঠামো ও পদাবলি', 'Structure & Councils') },
                 { href: '#membership', label: t('সদস্যপদ ও ক্যাটাগরি', 'Membership Guidelines') },
