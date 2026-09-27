@@ -11,6 +11,11 @@ export interface ActivityItem {
   title: string;
   titleEn?: string;
   date: string;
+  timestamp?: string;
+  eventDateTimestamp: number;
+  year: number;
+  month: number;
+  day: number;
   formattedDateBn: string;
   formattedDateEn: string;
   description: string;
@@ -18,4 +23,6 @@ export interface ActivityItem {
   categoryBn: string;
   images: ActivityImage[];
   isFuture: boolean;
+  status: 'ongoing' | 'completed';
 }
+

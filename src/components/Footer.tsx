@@ -73,13 +73,14 @@ export default function Footer() {
             </h4>
             <ul className="space-y-2.5">
               {[
-                { href: '#about', label: t('সংগঠন পরিচিতি ও আদর্শ', 'About & Nature') },
-                { href: '#mission', label: t('১৫টি লক্ষ্য ও উদ্দেশ্য', '15 Mission Objectives') },
-                { href: '#activities', label: t('সাম্প্রতিক কার্যক্রম ও মাঠপর্যায়ের কাজ', 'Recent Field Activities') },
-                { href: '#principles', label: t('৬টি মূলনীতি', '6 Core Principles') },
-                { href: '#structure', label: t('সাংগঠনিক কাঠামো ও পদাবলি', 'Structure & Councils') },
-                { href: '#membership', label: t('সদস্যপদ ও ক্যাটাগরি', 'Membership Guidelines') },
-                { href: '#contact', label: t('যোগাযোগ ও ইমেইল', 'Contact & Email Us') },
+                { href: '/#about', label: t('সংগঠন পরিচিতি ও আদর্শ', 'About & Nature') },
+                { href: '/#mission', label: t('১৫টি লক্ষ্য ও উদ্দেশ্য', '15 Mission Objectives') },
+                { href: '/activities', label: t('সাম্প্রতিক কার্যক্রম ও মাঠপর্যায়ের কাজ', 'Recent Field Activities') },
+                { href: '/#principles', label: t('৬টি মূলনীতি', '6 Core Principles') },
+                { href: '/#structure', label: t('সাংগঠনিক কাঠামো ও পদাবলি', 'Structure & Councils') },
+                { href: '/#committee', label: t('কার্যকরী পরিষদ (নেতৃত্ব)', 'Executive Committee') },
+                { href: '/#membership', label: t('সদস্যপদ ও ক্যাটাগরি', 'Membership Guidelines') },
+                { href: '/#contact', label: t('যোগাযোগ ও ইমেইল', 'Contact & Email Us') },
                 {
                   href: 'https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform',
                   label: t('সদস্যপদ আবেদন (গুগল ফরম)', 'Membership Form (Google)'),

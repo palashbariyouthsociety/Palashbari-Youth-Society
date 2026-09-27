@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
 import { ActivityItem, ActivityImage } from '@/types/activity';
-import { FALLBACK_ACTIVITIES } from '@/lib/activities';
+import { FALLBACK_ACTIVITIES, toBengaliNumerals } from '@/lib/activities';
 import {
   Calendar,
   Sparkles,
@@ -20,25 +21,70 @@ import {
   Hammer,
   HeartHandshake,
   Layers,
-  HelpCircle,
   CheckCircle,
+  CheckCircle2,
   FileText,
   Heart,
   Users,
   GraduationCap,
+  ArrowUpDown,
+  Search,
+  RotateCcw,
+  ArrowRight,
+  ArrowLeft,
 } from 'lucide-react';
 import DonationModal from '@/components/DonationModal';
 
-export default function RecentActivitiesSection() {
+const BN_MONTH_NAMES: Record<number, string> = {
+  1: 'জানুয়ারি',
+  2: 'ফেব্রুয়ারি',
+  3: 'মার্চ',
+  4: 'এপ্রিল',
+  5: 'মে',
+  6: 'জুন',
+  7: 'জুলাই',
+  8: 'আগস্ট',
+  9: 'সেপ্টেম্বর',
+  10: 'অক্টোবর',
+  11: 'নভেম্বর',
+  12: 'ডিসেম্বর',
+};
+
+const EN_MONTH_NAMES: Record<number, string> = {
+  1: 'January',
+  2: 'February',
+  3: 'March',
+  4: 'April',
+  5: 'May',
+  6: 'June',
+  7: 'July',
+  8: 'August',
+  9: 'September',
+  10: 'October',
+  11: 'November',
+  12: 'December',
+};
+
+interface RecentActivitiesSectionProps {
+  isLandingPage?: boolean;
+}
+
+export default function RecentActivitiesSection({ isLandingPage = true }: RecentActivitiesSectionProps) {
   const { t } = useLang();
   const [activities, setActivities] = useState<ActivityItem[]>(FALLBACK_ACTIVITIES);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [syncToast, setSyncToast] = useState(false);
 
-  // Guide Modal State
-  const [guideModalOpen, setGuideModalOpen] = useState(false);
+  // Filters State
+  const [statusFilter, setStatusFilter] = useState<'all' | 'ongoing' | 'completed'>('all');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
+  const [selectedYear, setSelectedYear] = useState<string>('all');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc'); // 'desc' = Newest first, 'asc' = Oldest first
+
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   // Donation Modal State
   const [donationModalOpen, setDonationModalOpen] = useState(false);
@@ -55,9 +101,11 @@ export default function RecentActivitiesSection() {
   // Track failed direct images to switch to Drive Previewer / fallback
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
-  const fetchActivities = useCallback(async () => {
+
+  const fetchActivities = useCallback(async (isManual = false) => {
+    setLoading(true);
     try {
-      const res = await fetch(`/api/activities?_t=${Date.now()}`, {
+      const res = await fetch(`/api/activities?_t=${Date.now()}&_rand=${Math.random()}`, {
         cache: 'no-store',
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -69,6 +117,10 @@ export default function RecentActivitiesSection() {
         if (data.activities && data.activities.length > 0) {
           setActivities(data.activities);
           setLastUpdated(new Date().toLocaleTimeString());
+          if (isManual) {
+            setSyncToast(true);
+            setTimeout(() => setSyncToast(false), 3500);
+          }
         }
       }
     } catch (err) {
@@ -80,19 +132,19 @@ export default function RecentActivitiesSection() {
 
   useEffect(() => {
     void (async () => {
-      await fetchActivities();
+      await fetchActivities(false);
     })();
 
-    // Auto-sync polling every 25 seconds
+    // Auto-sync polling every 20 seconds to catch sheet changes promptly
     const interval = setInterval(() => {
-      fetchActivities();
-    }, 25000);
+      fetchActivities(false);
+    }, 20000);
 
     // Auto-sync immediately when tab/window becomes active
-    const handleFocus = () => fetchActivities();
+    const handleFocus = () => fetchActivities(false);
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        fetchActivities();
+        fetchActivities(false);
       }
     };
 
@@ -112,7 +164,6 @@ export default function RecentActivitiesSection() {
     setCurrentImageIndex(initialIndex);
     setLightboxTitle(activity.title);
     setLightboxDate(activity.formattedDateBn);
-    // If the image already failed before, default to iframe mode
     const currImgId = activity.images[initialIndex]?.id;
     setUseIframeMode(Boolean(failedImages[currImgId]));
     setLightboxOpen(true);
@@ -207,24 +258,108 @@ export default function RecentActivitiesSection() {
     };
   };
 
-  // Filter activities
-  const filteredActivities =
-    activeCategory === 'all'
-      ? activities
-      : activities.filter((act) => act.category === activeCategory || act.categoryBn === activeCategory);
+  // Distinct Available Years for Date Filter
+  const availableYears = useMemo(() => {
+    const years = Array.from(new Set(activities.map((a) => a.year).filter(Boolean)));
+    return years.sort((a, b) => b - a);
+  }, [activities]);
+
+  // Distinct Available Months for Date Filter
+  const availableMonths = useMemo(() => {
+    let base = activities;
+    if (selectedYear !== 'all') {
+      base = base.filter((a) => a.year === Number(selectedYear));
+    }
+    const months = Array.from(new Set(base.map((a) => a.month).filter(Boolean)));
+    return months.sort((a, b) => a - b);
+  }, [activities, selectedYear]);
+
+  // Counts for Status Tabs
+  const ongoingCount = useMemo(
+    () => activities.filter((a) => a.status === 'ongoing').length,
+    [activities]
+  );
+  const completedCount = useMemo(
+    () => activities.filter((a) => a.status === 'completed').length,
+    [activities]
+  );
 
   // Available categories
-  const categories = [
-    { id: 'all', labelBn: 'সকল কার্যক্রম', labelEn: 'All Activities' },
-    ...Array.from(new Set(activities.map((a) => a.categoryBn))).map((catBn) => {
-      const act = activities.find((a) => a.categoryBn === catBn);
-      return {
-        id: act?.category || catBn,
-        labelBn: catBn,
-        labelEn: act?.category || catBn,
-      };
-    }),
-  ];
+  const categories = useMemo(() => {
+    return [
+      { id: 'all', labelBn: 'সকল কার্যক্রম', labelEn: 'All Activities' },
+      ...Array.from(new Set(activities.map((a) => a.categoryBn))).map((catBn) => {
+        const act = activities.find((a) => a.categoryBn === catBn);
+        return {
+          id: act?.category || catBn,
+          labelBn: catBn,
+          labelEn: act?.category || catBn,
+        };
+      }),
+    ];
+  }, [activities]);
+
+  // Filter & Sort activities based on Date, Status, Year, Month, Category, Search
+  const filteredActivities = useMemo(() => {
+    return activities
+      .filter((act) => {
+        // 1. Status Filter: চলমান (ongoing) vs সম্পন্ন (completed)
+        if (statusFilter === 'ongoing' && act.status !== 'ongoing') return false;
+        if (statusFilter === 'completed' && act.status !== 'completed') return false;
+
+        // 2. Year Filter
+        if (selectedYear !== 'all' && act.year !== Number(selectedYear)) return false;
+
+        // 3. Month Filter
+        if (selectedMonth !== 'all' && act.month !== Number(selectedMonth)) return false;
+
+        // 4. Category Filter
+        if (activeCategory !== 'all') {
+          if (act.category !== activeCategory && act.categoryBn !== activeCategory) {
+            return false;
+          }
+        }
+
+        // 5. Search Query Filter
+        if (searchQuery.trim()) {
+          const q = searchQuery.toLowerCase().trim();
+          const matchTitle = act.title.toLowerCase().includes(q);
+          const matchDesc = act.description.toLowerCase().includes(q);
+          const matchCat = (act.categoryBn + ' ' + act.category).toLowerCase().includes(q);
+          const matchDate = (act.formattedDateBn + ' ' + act.formattedDateEn + ' ' + act.date).toLowerCase().includes(q);
+          if (!matchTitle && !matchDesc && !matchCat && !matchDate) return false;
+        }
+
+        return true;
+      })
+      .sort((a, b) => {
+        // Date Ordering: Newest first (desc) or Oldest first (asc)
+        if (sortOrder === 'asc') {
+          return a.eventDateTimestamp - b.eventDateTimestamp;
+        }
+        return b.eventDateTimestamp - a.eventDateTimestamp;
+      });
+  }, [activities, statusFilter, selectedYear, selectedMonth, activeCategory, searchQuery, sortOrder]);
+
+  // Max 6 activities on Landing Page, all activities on dedicated /activities page
+  const displayedActivities = useMemo(() => {
+    return isLandingPage ? filteredActivities.slice(0, 6) : filteredActivities;
+  }, [filteredActivities, isLandingPage]);
+
+  const hasActiveFilters =
+    statusFilter !== 'all' ||
+    selectedYear !== 'all' ||
+    selectedMonth !== 'all' ||
+    activeCategory !== 'all' ||
+    searchQuery.trim() !== '';
+
+  const resetAllFilters = () => {
+    setStatusFilter('all');
+    setSelectedYear('all');
+    setSelectedMonth('all');
+    setActiveCategory('all');
+    setSearchQuery('');
+  };
 
   return (
     <section id="activities" className="py-20 sm:py-24 bg-slate-50/70 relative overflow-hidden border-b border-slate-200/80">
@@ -232,8 +367,22 @@ export default function RecentActivitiesSection() {
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[450px] bg-gradient-to-tr from-blue-100/40 via-indigo-50/30 to-amber-50/20 blur-3xl rounded-full pointer-events-none -z-10" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        {/* Back Link if on Dedicated Activities Page */}
+        {!isLandingPage && (
+          <div className="mb-6">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:text-blue-600 hover:border-blue-300 text-xs sm:text-sm font-semibold shadow-xs transition-all group"
+            >
+              <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform text-blue-600" />
+              <span>{t('মূল পাতায় ফিরে যান', 'Back to Home')}</span>
+            </Link>
+          </div>
+        )}
+
         {/* Section Header */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8 sm:mb-10">
           <div>
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-semibold mb-3 shadow-xs">
               <Sparkles className="w-3.5 h-3.5 text-blue-600" />
@@ -250,7 +399,7 @@ export default function RecentActivitiesSection() {
             </p>
           </div>
 
-          {/* Action buttons: Live Sync + Help Guide */}
+          {/* Action buttons: Live Sync + General Donate (Drive Photo Guide completely removed) */}
           <div className="flex flex-wrap items-center gap-2.5 shrink-0 self-start md:self-end">
             {/* General Donate Button */}
             <button
@@ -264,161 +413,353 @@ export default function RecentActivitiesSection() {
               <span>{t('অনুদান পাঠান', 'Donate')}</span>
             </button>
 
+            {/* Direct Google Sheet Live Sync Button with Live Indicator */}
             <button
-              onClick={() => setGuideModalOpen(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-900 rounded-full text-xs font-semibold transition-colors shadow-xs"
+              onClick={() => fetchActivities(true)}
+              disabled={loading}
+              title={t('গুগল শিট থেকে সরাসরি তাজা তথ্য সিঙ্ক করুন', 'Direct live sync from Google Sheet')}
+              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 hover:border-blue-400 rounded-full shadow-xs text-xs text-slate-700 transition-all active:scale-95 disabled:opacity-60 group"
             >
-              <HelpCircle className="w-3.5 h-3.5 text-amber-600" />
-              <span>{t('ড্রাইভের ছবি দৃশ্যমান করার নিয়ম', 'Drive Photo Guide')}</span>
-            </button>
-
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-white border border-slate-200 rounded-full shadow-xs text-xs text-slate-600">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-              <span>{t('গুগল শিট সিঙ্ক', 'Live Sync')}</span>
-              {lastUpdated && <span className="text-slate-400 hidden sm:inline">• {lastUpdated}</span>}
-            </div>
-
-            <button
-              onClick={fetchActivities}
-              disabled={loading}
-              title={t('তাজা তথ্য রিফ্রেশ করুন', 'Refresh live data')}
-              className="p-2 bg-white hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-full shadow-xs transition-transform active:scale-95 disabled:opacity-50"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin text-blue-600' : ''}`} />
+              <span className="font-semibold text-slate-800">{t('শিট সিঙ্ক', 'Sheet Sync')}</span>
+              <RefreshCw className={`w-3.5 h-3.5 text-blue-600 group-hover:rotate-180 transition-transform ${loading ? 'animate-spin' : ''}`} />
+              {lastUpdated && <span className="text-slate-400 text-[11px] hidden sm:inline">• {lastUpdated}</span>}
             </button>
           </div>
         </div>
 
-        {/* Category Filter Pills */}
-        {categories.length > 2 && (
-          <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-8 no-scrollbar">
+        {/* Sync Success Toast Notification */}
+        {syncToast && (
+          <div className="mb-5 p-3 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-900 flex items-center justify-between shadow-xs animate-fade-in">
+            <div className="flex items-center gap-2 text-xs sm:text-sm font-bold">
+              <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+              <span>{t('গুগল শিট থেকে সর্বশেষ তথ্য সফলভাবে সিঙ্ক হয়েছে!', 'Live data successfully synced from Google Sheet!')}</span>
+            </div>
+            <button
+              onClick={() => setSyncToast(false)}
+              className="text-emerald-700 hover:text-emerald-950 p-1"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        )}
+
+        {/* Compact, Modern Filter Hub (Ultra-Responsive for Mobile & Sleek on Desktop) */}
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xs p-3 sm:p-4 mb-8 space-y-3">
+          {/* Row 1: Status Filter Tabs (3-column grid on mobile, inline-flex on desktop) */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+            {/* 3 Status Buttons with responsive labels & counts */}
+            <div className="grid grid-cols-3 gap-1 p-1 bg-slate-100 rounded-xl w-full sm:w-auto">
+              {/* All */}
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`flex items-center justify-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all ${
+                  statusFilter === 'all'
+                    ? 'bg-white text-slate-900 shadow-xs'
+                    : 'text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                <span className="truncate">{t('সকল', 'All')}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black ${
+                    statusFilter === 'all' ? 'bg-blue-100 text-blue-700' : 'bg-slate-200 text-slate-600'
+                  }`}
+                >
+                  {activities.length}
+                </span>
+              </button>
+
+              {/* Ongoing (চলমান) */}
+              <button
+                onClick={() => setStatusFilter('ongoing')}
+                className={`flex items-center justify-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all ${
+                  statusFilter === 'ongoing'
+                    ? 'bg-emerald-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-emerald-700'
+                }`}
+              >
+                <span className="relative flex h-2 w-2 shrink-0">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                </span>
+                <span className="truncate">{t('চলমান', 'Ongoing')}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black ${
+                    statusFilter === 'ongoing' ? 'bg-white/25 text-white' : 'bg-emerald-100 text-emerald-800'
+                  }`}
+                >
+                  {ongoingCount}
+                </span>
+              </button>
+
+              {/* Completed (সম্পন্ন) */}
+              <button
+                onClick={() => setStatusFilter('completed')}
+                className={`flex items-center justify-center gap-1.5 py-1.5 px-2.5 sm:px-3 rounded-lg text-xs font-bold transition-all ${
+                  statusFilter === 'completed'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'text-slate-600 hover:text-blue-700'
+                }`}
+              >
+                <CheckCircle className="w-3.5 h-3.5 shrink-0" />
+                <span className="truncate">{t('সম্পন্ন', 'Done')}</span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-full text-[10px] sm:text-[11px] font-black ${
+                    statusFilter === 'completed' ? 'bg-white/25 text-white' : 'bg-blue-100 text-blue-800'
+                  }`}
+                >
+                  {completedCount}
+                </span>
+              </button>
+            </div>
+
+            {/* Total Results Counter & Reset Button */}
+            <div className="flex items-center justify-between sm:justify-end gap-3 text-xs text-slate-500 px-1">
+              <span className="font-semibold text-slate-700">
+                {t(
+                  `প্রদর্শিত: ${toBengaliNumerals(displayedActivities.length)}টি`,
+                  `Showing: ${displayedActivities.length}`
+                )}
+              </span>
+              {hasActiveFilters && (
+                <button
+                  onClick={resetAllFilters}
+                  className="inline-flex items-center gap-1 text-[11px] font-bold text-rose-600 hover:text-rose-700 hover:underline"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>{t('রিসেট', 'Reset')}</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Row 2: Search, Year, Month, Sort in a tightly packed responsive bar */}
+          <div className="grid grid-cols-1 sm:grid-cols-12 gap-2 pt-1">
+            {/* Search Input (spans full width on mobile, 5 cols on sm, 6 cols on md) */}
+            <div className="sm:col-span-6 md:col-span-6 relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('কার্যক্রম বা স্থান অনুসন্ধান...', 'Search activities...')}
+                className="w-full pl-8 pr-7 py-1.5 h-9 rounded-xl bg-slate-50 border border-slate-200 text-xs font-medium text-slate-800 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors"
+              />
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+
+            {/* Mobile: 3 controls in 1 row (Year, Month, Sort) / Desktop: sm:col-span-6 md:col-span-6 */}
+            <div className="grid grid-cols-3 gap-2 sm:col-span-6 md:col-span-6">
+              {/* Year Select */}
+              <div className="relative">
+                <select
+                  value={selectedYear}
+                  onChange={(e) => {
+                    setSelectedYear(e.target.value);
+                    setSelectedMonth('all');
+                  }}
+                  className="w-full px-2 py-1.5 h-9 rounded-xl bg-slate-50 border border-slate-200 text-[11px] sm:text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors truncate"
+                >
+                  <option value="all">{t('বছর (সব)', 'All Years')}</option>
+                  {availableYears.map((yr) => (
+                    <option key={yr} value={yr}>
+                      {toBengaliNumerals(yr)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Month Select */}
+              <div className="relative">
+                <select
+                  value={selectedMonth}
+                  onChange={(e) => setSelectedMonth(e.target.value)}
+                  className="w-full px-2 py-1.5 h-9 rounded-xl bg-slate-50 border border-slate-200 text-[11px] sm:text-xs font-medium text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-colors truncate"
+                >
+                  <option value="all">{t('মাস (সব)', 'All Months')}</option>
+                  {availableMonths.map((m) => (
+                    <option key={m} value={m}>
+                      {BN_MONTH_NAMES[m]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Sort Order Toggle */}
+              <button
+                onClick={() => setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc')}
+                title={t('তারিখের ক্রম পরিবর্তন করুন', 'Toggle date sorting')}
+                className="w-full px-2 py-1.5 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-[11px] sm:text-xs font-bold text-slate-700 flex items-center justify-center gap-1 transition-all active:scale-95 truncate"
+              >
+                <ArrowUpDown className="w-3 h-3 text-blue-600 shrink-0" />
+                <span className="truncate">
+                  {sortOrder === 'desc' ? t('নতুন', 'Newest') : t('পুরাতন', 'Oldest')}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Row 3: Swipeable Category Pills */}
+          <div className="pt-2 border-t border-slate-100 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
             {categories.map((cat) => (
               <button
                 key={cat.id}
                 onClick={() => setActiveCategory(cat.id)}
-                className={`px-4 py-2 rounded-full text-xs sm:text-sm font-semibold whitespace-nowrap transition-all ${
+                className={`px-2.5 py-1 rounded-full text-[11px] font-semibold whitespace-nowrap transition-all ${
                   activeCategory === cat.id
-                    ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
-                    : 'bg-white text-slate-700 border border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                    ? 'bg-blue-600 text-white shadow-xs'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 {t(cat.labelBn, cat.labelEn)}
               </button>
             ))}
           </div>
-        )}
+        </div>
 
-        {/* Activities Grid - Equal Height Cards on Same Level */}
-        <div className="grid lg:grid-cols-2 gap-8 items-stretch">
-          {filteredActivities.map((act) => {
-            const isExpanded = expandedId === act.id;
+        {/* Empty State */}
+        {displayedActivities.length === 0 ? (
+          <div className="bg-white rounded-3xl border border-slate-200 p-10 sm:p-14 text-center max-w-lg mx-auto shadow-sm my-8">
+            <div className="w-16 h-16 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center mx-auto mb-4">
+              <Calendar className="w-8 h-8 text-blue-500" />
+            </div>
+            <h3 className="text-lg font-bold text-slate-800 mb-1.5">
+              {t('কোনো কার্যক্রম পাওয়া যায়নি', 'No Activities Found')}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 mb-6 leading-relaxed">
+              {t(
+                'আপনার নির্বাচিত তারিখ বা ফিল্টারের সাথে মিলে এমন কোনো ফলাফল নেই। অন্য ফিল্টার বা তারিখ নির্বাচন করুন।',
+                'No activities matched your selected date or filters. Try adjusting your selection.'
+              )}
+            </p>
+            <button
+              onClick={resetAllFilters}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs sm:text-sm shadow-md shadow-blue-500/20 transition-all active:scale-95"
+            >
+              <RotateCcw className="w-4 h-4" />
+              <span>{t('ফিল্টার রিসেট করুন', 'Reset All Filters')}</span>
+            </button>
+          </div>
+        ) : (
+          /* Activities Grid - Equal Height Cards on Same Level */
+          <div className="grid lg:grid-cols-2 gap-8 items-stretch">
+            {displayedActivities.map((act) => {
+              const isExpanded = expandedId === act.id;
 
-            return (
-              <div
-                key={act.id}
-                className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300 overflow-hidden flex flex-col h-full justify-between"
-              >
-                {/* 1. Multi-Image Media Gallery Section */}
-                <div className="p-4 sm:p-5 pb-0 shrink-0">
-                  {act.images && act.images.length > 0 ? (
-                    <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-200/80">
-                      {/* Case A: Single Image */}
-                      {act.images.length === 1 && (
-                        <div
-                          onClick={() => openLightbox(act, 0)}
-                          className="relative h-64 sm:h-72 w-full cursor-pointer group overflow-hidden bg-slate-900"
-                        >
-                          {failedImages[act.images[0].id] ? (
-                            <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 text-white group-hover:brightness-110 transition-all">
-                              <div className="p-3.5 rounded-2xl bg-white/10 mb-3 border border-white/15">
-                                <ImageIcon className="w-8 h-8 text-amber-300" />
-                              </div>
-                              <p className="text-sm font-bold max-w-sm line-clamp-1">{act.title}</p>
-                              <span className="mt-2.5 px-3 py-1 rounded-full bg-blue-600/80 hover:bg-blue-600 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors">
-                                <Eye className="w-3.5 h-3.5" />
-                                {t('ছবি প্রিভিউ করুন', 'View Photo Preview')}
-                              </span>
-                            </div>
-                          ) : (
-                            <>
-                              {/* eslint-disable-next-line @next/next/no-img-element */}
-                              <img
-                                src={act.images[0].directUrl}
-                                alt={act.title}
-                                onError={() => handleImageError(act.images[0].id)}
-                                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
-                                loading="lazy"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
-                                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 text-slate-900 text-xs font-bold backdrop-blur-sm shadow-md">
-                                  <Maximize2 className="w-3 h-3 text-blue-600" />
-                                  <span>{t('বড় আকারে দেখুন', 'View Full Screen')}</span>
-                                </span>
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
-
-                      {/* Case B: Two Images (Split Grid) */}
-                      {act.images.length === 2 && (
-                        <div className="grid grid-cols-2 gap-1.5 h-64 sm:h-72 bg-slate-900">
-                          {act.images.map((img, i) => (
-                            <div
-                              key={img.id}
-                              onClick={() => openLightbox(act, i)}
-                              className="relative h-full w-full cursor-pointer group overflow-hidden bg-slate-900"
-                            >
-                              {failedImages[img.id] ? (
-                                <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-blue-950 to-slate-900 text-white group-hover:brightness-110 transition-all">
-                                  <ImageIcon className="w-6 h-6 text-amber-300 mb-1.5" />
-                                  <p className="text-xs font-semibold">{t(`স্থিরচিত্র ${i + 1}`, `Photo ${i + 1}`)}</p>
-                                  <span className="text-[10px] text-blue-300 mt-1 flex items-center gap-1">
-                                    <Eye className="w-3 h-3" />
-                                    {t('প্রিভিউ', 'Preview')}
-                                  </span>
-                                </div>
-                              ) : (
-                                <>
-                                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                                  <img
-                                    src={img.directUrl}
-                                    alt={`${act.title} - ${i + 1}`}
-                                    onError={() => handleImageError(img.id)}
-                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                    loading="lazy"
-                                  />
-                                  <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                    <Maximize2 className="w-5 h-5 text-white drop-shadow" />
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Case C: Three or More Images (Professional Collage) */}
-                      {act.images.length >= 3 && (
-                        <div className="grid grid-cols-3 gap-1.5 h-64 sm:h-80 bg-slate-900">
-                          {/* Main Featured Photo (2 cols) */}
+              return (
+                <div
+                  key={act.id}
+                  className="bg-white rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-300 transition-all duration-300 overflow-hidden flex flex-col h-full justify-between"
+                >
+                  {/* 1. Multi-Image Media Gallery Section */}
+                  <div className="p-4 sm:p-5 pb-0 shrink-0">
+                    {act.images && act.images.length > 0 ? (
+                      <div className="relative rounded-2xl overflow-hidden bg-slate-900 border border-slate-200/80">
+                        {/* Case A: Single Image */}
+                        {act.images.length === 1 && (
                           <div
                             onClick={() => openLightbox(act, 0)}
-                            className="col-span-2 relative h-full cursor-pointer group overflow-hidden bg-slate-900"
+                            className="relative h-64 sm:h-72 w-full cursor-pointer group overflow-hidden bg-slate-900"
                           >
                             {failedImages[act.images[0].id] ? (
-                              <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 text-white group-hover:brightness-110 transition-all">
-                                <ImageIcon className="w-8 h-8 text-amber-300 mb-2" />
-                                <p className="text-xs font-bold line-clamp-2">{act.title}</p>
-                                <span className="text-xs text-white bg-blue-600/80 px-3 py-1 rounded-full mt-2 flex items-center gap-1.5">
+                              <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 text-white group-hover:brightness-110 transition-all">
+                                <div className="p-3.5 rounded-2xl bg-white/10 mb-3 border border-white/15">
+                                  <ImageIcon className="w-8 h-8 text-amber-300" />
+                                </div>
+                                <p className="text-sm font-bold max-w-sm line-clamp-1">{act.title}</p>
+                                <span className="mt-2.5 px-3 py-1 rounded-full bg-blue-600/80 hover:bg-blue-600 text-xs font-semibold text-white flex items-center gap-1.5 transition-colors">
                                   <Eye className="w-3.5 h-3.5" />
-                                  {t('গ্যালারি প্রিভিউ দেখুন', 'View Gallery Preview')}
+                                  {t('ছবি প্রিভিউ করুন', 'View Photo Preview')}
                                 </span>
                               </div>
                             ) : (
+                              <>
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={act.images[0].directUrl}
+                                  alt={act.title}
+                                  onError={() => handleImageError(act.images[0].id)}
+                                  className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                                  loading="lazy"
+                                />
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/90 text-slate-900 text-xs font-bold backdrop-blur-sm shadow-md">
+                                    <Maximize2 className="w-3 h-3 text-blue-600" />
+                                    <span>{t('বড় আকারে দেখুন', 'View Full Screen')}</span>
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Case B: Two Images (Split Grid) */}
+                        {act.images.length === 2 && (
+                          <div className="grid grid-cols-2 gap-1.5 h-64 sm:h-72 bg-slate-900">
+                            {act.images.map((img, i) => (
+                              <div
+                                key={img.id}
+                                onClick={() => openLightbox(act, i)}
+                                className="relative h-full w-full cursor-pointer group overflow-hidden bg-slate-900"
+                              >
+                                {failedImages[img.id] ? (
+                                  <div className="w-full h-full flex flex-col items-center justify-center p-3 text-center bg-gradient-to-br from-blue-950 to-slate-900 text-white group-hover:brightness-110 transition-all">
+                                    <ImageIcon className="w-6 h-6 text-amber-300 mb-1.5" />
+                                    <p className="text-xs font-semibold">{t(`স্থিরচিত্র ${i + 1}`, `Photo ${i + 1}`)}</p>
+                                    <span className="text-[10px] text-blue-300 mt-1 flex items-center gap-1">
+                                      <Eye className="w-3 h-3" />
+                                      {t('প্রিভিউ', 'Preview')}
+                                    </span>
+                                  </div>
+                                ) : (
+                                  <>
+                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                    <img
+                                      src={img.directUrl}
+                                      alt={`${act.title} - ${i + 1}`}
+                                      onError={() => handleImageError(img.id)}
+                                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                      loading="lazy"
+                                    />
+                                    <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                      <Maximize2 className="w-5 h-5 text-white drop-shadow" />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+
+                        {/* Case C: Three or More Images (Professional Collage) */}
+                        {act.images.length >= 3 && (
+                          <div className="grid grid-cols-3 gap-1.5 h-64 sm:h-80 bg-slate-900">
+                            {/* Main Featured Photo (2 cols) */}
+                            <div
+                              onClick={() => openLightbox(act, 0)}
+                              className="col-span-2 relative h-full cursor-pointer group overflow-hidden bg-slate-900"
+                            >
+                              {failedImages[act.images[0].id] ? (
+                                <div className="w-full h-full flex flex-col items-center justify-center p-4 text-center bg-gradient-to-br from-blue-950 via-slate-900 to-indigo-950 text-white group-hover:brightness-110 transition-all">
+                                  <ImageIcon className="w-8 h-8 text-amber-300 mb-2" />
+                                  <p className="text-xs font-bold line-clamp-2">{act.title}</p>
+                                  <span className="text-xs text-white bg-blue-600/80 px-3 py-1 rounded-full mt-2 flex items-center gap-1.5">
+                                    <Eye className="w-3.5 h-3.5" />
+                                    {t('গ্যালারি প্রিভিউ দেখুন', 'View Gallery Preview')}
+                                  </span>
+                                </div>
+                              ) : (
                               <>
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img
@@ -540,13 +881,31 @@ export default function RecentActivitiesSection() {
                 {/* 2. Text Content & Details (Flex-1 ensures equal card height) */}
                 <div className="p-5 sm:p-7 flex-1 flex flex-col justify-between">
                   <div className="flex-1">
-                    {/* Date and Category Row */}
+                    {/* Date and Status and Category Row */}
                     <div className="flex flex-wrap items-center gap-2 mb-3.5">
-                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-medium">
+                      {/* Event Date Badge */}
+                      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-800 text-xs font-semibold shadow-2xs">
                         <Calendar className="w-3.5 h-3.5 text-blue-600" />
                         <span>{t(act.formattedDateBn, act.formattedDateEn)}</span>
                       </span>
 
+                      {/* Status Badge: Ongoing (চলমান) vs Completed (সম্পন্ন) */}
+                      {act.status === 'ongoing' ? (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold shadow-xs">
+                          <span className="relative flex h-2 w-2">
+                            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                          </span>
+                          <span>{t('চলমান কার্যক্রম', 'Ongoing Event')}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-blue-600" />
+                          <span>{t('সম্পন্ন কার্যক্রম', 'Completed')}</span>
+                        </span>
+                      )}
+
+                      {/* Category Badge */}
                       {(() => {
                         const catMeta = getCategoryMeta(act.categoryBn, act.category);
                         return (
@@ -556,13 +915,6 @@ export default function RecentActivitiesSection() {
                           </span>
                         );
                       })()}
-
-                      {act.isFuture && (
-                        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 border border-rose-200 text-rose-700 text-xs font-bold shadow-xs">
-                          <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
-                          <span>{t('আসন্ন কর্মসূচি • অনুদান চলছে', 'Upcoming • Donations Open')}</span>
-                        </span>
-                      )}
                     </div>
 
                     {/* Headline */}
@@ -615,8 +967,8 @@ export default function RecentActivitiesSection() {
                       )}
                     </div>
 
-                    {/* Right Action: Donate button if future date, else Completed Status */}
-                    {act.isFuture ? (
+                    {/* Right Action: Donate button if ongoing/future, else Completed Status */}
+                    {act.status === 'ongoing' ? (
                       <button
                         onClick={() => {
                           setDonationActivityTitle(act.title);
@@ -625,7 +977,7 @@ export default function RecentActivitiesSection() {
                         className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-r from-[#e2136e] via-pink-600 to-[#f7941d] hover:brightness-105 text-white font-bold text-xs shadow-md shadow-pink-500/20 transition-all hover:scale-105 active:scale-95 group"
                       >
                         <Heart className="w-3.5 h-3.5 fill-white text-white group-hover:scale-125 transition-transform" />
-                        <span>{t('অনুদান পাঠান', 'Donate')}</span>
+                        <span>{t('সহযোগিতা / অনুদান দিন', 'Donate / Support')}</span>
                         <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded text-white font-medium">
                           বিকাশ/নগদ
                         </span>
@@ -642,6 +994,27 @@ export default function RecentActivitiesSection() {
             );
           })}
         </div>
+      )}
+
+      {/* View All Button on Landing Page */}
+      {isLandingPage && (
+        <div className="mt-12 text-center">
+          <Link
+            href="/activities"
+            className="inline-flex items-center gap-3 px-8 py-3.5 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm sm:text-base shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/35 transition-all duration-300 transform hover:-translate-y-0.5 active:scale-95 group"
+          >
+            <span>{t('সকল কার্যক্রম ও মাঠপর্যায়ের প্রতিবেদন দেখুন', 'View All Activities & Reports')}</span>
+            <ArrowRight className="w-5 h-5 group-hover:translate-x-1.5 transition-transform" />
+          </Link>
+          <p className="mt-3 text-xs sm:text-sm text-slate-500">
+            {t(
+              `সর্বমোট ${toBengaliNumerals(activities.length)}টি কার্যক্রমের পূর্ণাঙ্গ আর্কাইভ এবং ফিল্টার দেখতে এখানে ক্লিক করুন`,
+              `Click here to browse our complete archive of all ${activities.length} field activities and reports`
+            )}
+          </p>
+        </div>
+      )}
+
       </div>
 
       {/* 4. Full-Screen Interactive Lightbox Modal */}
@@ -814,73 +1187,7 @@ export default function RecentActivitiesSection() {
         </div>
       )}
 
-      {/* 5. Guide Modal: How to make Google Drive Photos Public */}
-      {guideModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-200">
-                  <HelpCircle className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-slate-900 text-base sm:text-lg">
-                  {t('গুগল ড্রাইভের ছবি ওয়েবসাইটে প্রদর্শনের নিয়ম', 'How to Enable Photo Previews')}
-                </h3>
-              </div>
-              <button
-                onClick={() => setGuideModalOpen(false)}
-                className="p-1.5 rounded-full hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="py-5 space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
-              <p>
-                {t(
-                  'গুগল ফর্মের মাধ্যমে আপলোড হওয়া ছবিগুলো গুগল ড্রাইভে ডিফল্টভাবে "Restricted" (সীমাবদ্ধ) থাকে। ফলে গুগল সার্ভার সরাসরি কোনো ওয়েবসাইটে সেগুলো দেখাতে দেয় না।',
-                  'Photos uploaded via Google Forms are set to "Restricted" by default in Google Drive, which prevents external websites from displaying them.'
-                )}
-              </p>
-
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 space-y-2.5">
-                <p className="font-bold text-slate-900 text-xs sm:text-sm">{t('ছবিগুলো সবার জন্য চালু করার ধাপ:', 'Steps to make photos public:')}</p>
-                <ol className="list-decimal list-inside space-y-1.5 text-slate-700">
-                  <li>{t('আপনার Google Drive-এ প্রবেশ করুন।', 'Go to your Google Drive.')}</li>
-                  <li>{t('যে ফোল্ডারে ফর্মের ছবিগুলো জমা হয়েছে সেটির ওপর রাইট-ক্লিক করুন।', 'Right-click the folder where form photos are stored.')}</li>
-                  <li>{t('Share (শেয়ার) অপশনে ক্লিক করুন।', 'Click the "Share" option.')}</li>
-                  <li>
-                    {t(
-                      'General access (সাধারণ অ্যাক্সেস) এ "Anyone with the link" (লিংক আছে এমন যে কেউ) নির্বাচন করুন।',
-                      'Under General access, change to "Anyone with the link".'
-                    )}
-                  </li>
-                  <li>{t('Done এ ক্লিক করে সংরক্ষণ করুন।', 'Click Done to save.')}</li>
-                </ol>
-              </div>
-
-              <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-xl text-blue-800 text-xs">
-                <CheckCircle className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
-                <span>
-                  {t(
-                    'ফোল্ডারটি একবার "Anyone with the link" করে দিলে নতুন আপলোড হওয়া সকল ছবি স্বয়ংক্রিয়ভাবে সরাসরি ওয়েবসাইটে দৃশ্যমান হয়ে যাবে।',
-                    'Once set, all newly uploaded photos will automatically be visible on the website.'
-                  )}
-                </span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setGuideModalOpen(false)}
-              className="w-full py-2.5 rounded-full bg-slate-900 hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm transition-colors"
-            >
-              {t('ঠিক আছে, বুঝেছি', 'Got it')}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* 6. Donation Modal with bKash and Nagad Branding */}
+      {/* Donation Modal with bKash and Nagad Branding */}
       <DonationModal
         isOpen={donationModalOpen}
         onClose={() => setDonationModalOpen(false)}
