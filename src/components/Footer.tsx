@@ -79,6 +79,7 @@ export default function Footer() {
                 { href: '/#principles', label: t('৬টি মূলনীতি', '6 Core Principles') },
                 { href: '/#structure', label: t('সাংগঠনিক কাঠামো ও পদাবলি', 'Structure & Councils') },
                 { href: '/#committee', label: t('কার্যকরী পরিষদ (নেতৃত্ব)', 'Executive Committee') },
+                { href: '/finance', label: t('আয়-ব্যয় ও আর্থিক হিসাব (স্বচ্ছতা)', 'Income-Expense & Financial Accounts') },
                 { href: '/#membership', label: t('সদস্যপদ ও ক্যাটাগরি', 'Membership Guidelines') },
                 { href: '/#contact', label: t('যোগাযোগ ও ইমেইল', 'Contact & Email Us') },
                 {

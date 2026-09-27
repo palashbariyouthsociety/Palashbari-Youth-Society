@@ -2,11 +2,13 @@
 
 import Image from 'next/image';
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useLang } from '@/context/LanguageContext';
 import { Globe, UserPlus, Menu, X } from 'lucide-react';
 
 export default function Navbar() {
   const { lang, toggleLang, t } = useLang();
+  const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -16,13 +18,15 @@ export default function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  const isSolidNav = scrolled || (pathname && pathname !== '/');
+
   const navLinks = [
     { href: '/#about', label: t('পরিচিতি', 'About') },
     { href: '/#mission', label: t('লক্ষ্য ও উদ্দেশ্য', 'Mission') },
     { href: '/activities', label: t('কার্যক্রম', 'Activities') },
-    { href: '/#principles', label: t('মূলনীতি', 'Principles') },
     { href: '/#structure', label: t('কাঠামো', 'Structure') },
     { href: '/#committee', label: t('কার্যকরী পরিষদ', 'Committee') },
+    { href: '/finance', label: t('আয়-ব্যয়', 'Finance') },
     { href: '/#membership', label: t('সদস্যপদ', 'Membership') },
     { href: '/#contact', label: t('যোগাযোগ', 'Contact') },
   ];
@@ -30,7 +34,7 @@ export default function Navbar() {
   return (
     <nav
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        scrolled
+        isSolidNav
           ? 'bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-sm'
           : 'bg-transparent border-b border-transparent'
       }`}
@@ -52,15 +56,22 @@ export default function Navbar() {
 
           {/* Desktop Nav Links (xl screens to prevent wrapping with 8 items) */}
           <div className="hidden xl:flex items-center gap-0.5 2xl:gap-1 bg-white/90 p-1.5 rounded-full border border-slate-200/90 shadow-sm backdrop-blur-md">
-            {navLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                className="px-2.5 2xl:px-3.5 py-1.5 text-xs 2xl:text-sm font-medium text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-all duration-200 whitespace-nowrap"
-              >
-                {link.label}
-              </a>
-            ))}
+            {navLinks.map((link) => {
+              const isActive = pathname === link.href;
+              return (
+                <a
+                  key={link.href}
+                  href={link.href}
+                  className={`px-2.5 2xl:px-3.5 py-1.5 text-xs 2xl:text-sm font-medium rounded-full transition-all duration-200 whitespace-nowrap ${
+                    isActive
+                      ? 'bg-blue-600 text-white font-bold shadow-xs'
+                      : 'text-slate-600 hover:text-blue-600 hover:bg-slate-100'
+                  }`}
+                >
+                  {link.label}
+                </a>
+              );
+            })}
           </div>
 
           {/* Right Actions */}
@@ -101,16 +112,23 @@ export default function Navbar() {
         {menuOpen && (
           <div className="xl:hidden pb-5 animate-fade-in">
             <div className="bg-white rounded-2xl p-4 space-y-1 border border-slate-200 shadow-xl max-h-[80vh] overflow-y-auto">
-              {navLinks.map((link) => (
-                <a
-                  key={link.href}
-                  href={link.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="block px-4 py-2.5 text-sm font-medium text-slate-700 hover:text-blue-600 hover:bg-slate-50 rounded-xl transition-all"
-                >
-                  {link.label}
-                </a>
-              ))}
+              {navLinks.map((link) => {
+                const isActive = pathname === link.href;
+                return (
+                  <a
+                    key={link.href}
+                    href={link.href}
+                    onClick={() => setMenuOpen(false)}
+                    className={`block px-4 py-2.5 text-sm font-medium rounded-xl transition-all ${
+                      isActive
+                        ? 'bg-blue-50 text-blue-700 font-bold'
+                        : 'text-slate-700 hover:text-blue-600 hover:bg-slate-50'
+                    }`}
+                  >
+                    {link.label}
+                  </a>
+                );
+              })}
               <div className="pt-3 border-t border-slate-100">
                 <a
                   href="https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform"
