@@ -88,13 +88,19 @@ export function parseTransactionDate(rawDate: string): ParsedDateInfo {
 }
 
 export function formatCurrencyBn(amount: number): string {
-  const parts = Math.abs(amount).toLocaleString('en-US');
-  return `৳ ${toBengaliNumerals(parts)}`;
+  const isWhole = amount % 1 === 0;
+  const formatted = isWhole
+    ? Math.abs(amount).toLocaleString('en-US')
+    : Math.abs(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `৳ ${toBengaliNumerals(formatted)}`;
 }
 
 export function formatCurrencyEn(amount: number): string {
-  const parts = Math.abs(amount).toLocaleString('en-US');
-  return `৳ ${parts}`;
+  const isWhole = amount % 1 === 0;
+  const formatted = isWhole
+    ? Math.abs(amount).toLocaleString('en-US')
+    : Math.abs(amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return `৳ ${formatted}`;
 }
 
 export function amountToBengaliWords(num: number): string {
@@ -231,9 +237,10 @@ export function parseFinanceCSV(csvText: string): Transaction[] {
 
     const type = isExpense ? 'expense' : 'income';
 
-    // Amount cleanup
+    // Amount cleanup (round to 2 decimals)
     const cleanAmountStr = rawAmount.replace(/[৳$,\s]/g, '');
-    const amount = Math.abs(parseFloat(cleanAmountStr)) || 0;
+    const rawParsed = Math.abs(parseFloat(cleanAmountStr)) || 0;
+    const amount = Math.round(rawParsed * 100) / 100;
 
     const parsedDate = parseTransactionDate(rawDate);
 
@@ -252,9 +259,10 @@ export function parseFinanceCSV(csvText: string): Transaction[] {
       category = type === 'income' ? 'অনুদান ও চাঁদা' : 'সাংগঠনিক পরিচালনা';
     }
 
+    const rawDonor = donorIdx >= 0 && row[donorIdx] ? row[donorIdx].trim() : '';
     const donorOrRecipient =
-      donorIdx >= 0 && row[donorIdx]
-        ? row[donorIdx]
+      rawDonor.length > 0
+        ? rawDonor
         : type === 'income'
         ? 'সম্মানিত সদস্য / শুভানুধ্যায়ী'
         : 'পলাশবাড়ী ইয়াং সোসাইটি কার্যনির্বাহী';

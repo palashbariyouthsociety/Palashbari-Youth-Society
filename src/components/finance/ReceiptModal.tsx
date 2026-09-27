@@ -172,7 +172,7 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
         ctx.fillText(value, 260, y + 3);
       };
 
-      drawRow(275, 'অর্থপ্রদানকারী / Donor:', transaction.donorOrRecipient || 'সম্মানিত সদস্য / শুভানুধ্যায়ী');
+      drawRow(275, 'দাতা / গ্রহীতার নাম (Name):', transaction.donorOrRecipient || 'সম্মানিত সদস্য / শুভানুধ্যায়ী');
       drawRow(315, 'লেনদেনের ধরন / Type:', 'প্রাপ্ত অনুদান / সাধারণ তহবিলে জমা (Income)');
       drawRow(355, 'খাত ও ক্যাটাগরি / Category:', transaction.category || 'সদস্য চাঁদা ও সাধারণ অনুদান');
       drawRow(395, 'বিবরণ / Description:', transaction.description || 'সংগঠনের জনকল্যাণমূলক তহবিল');
@@ -373,11 +373,16 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
             <div className="py-5 space-y-3.5 text-xs sm:text-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                  <User className="w-3.5 h-3.5 text-slate-400" />
-                  {t('অর্থপ্রদানকারী / দাতা / সদস্য:', 'Donor / Member / Payer:')}
+                  <User className="w-3.5 h-3.5 text-blue-600" />
+                  {transaction.type === 'income'
+                    ? t('দাতা / অর্থপ্রদানকারীর নাম:', 'Donor / Payer Name:')
+                    : t('গ্রহীতার নাম / প্রাপক:', 'Recipient / Payee Name:')}
                 </span>
-                <span className="font-bold text-slate-900 sm:text-right">
-                  {transaction.donorOrRecipient || t('সম্মানিত সদস্য / শুভানুধ্যায়ী', 'Honorable Member / Well-wisher')}
+                <span className="font-bold text-slate-900 sm:text-right text-sm">
+                  {transaction.donorOrRecipient ||
+                    (transaction.type === 'income'
+                      ? t('সম্মানিত সদস্য / শুভানুধ্যায়ী', 'Honorable Member / Well-wisher')
+                      : t('পলাশবাড়ী ইয়াং সোসাইটি কার্যনির্বাহী', 'Palashbari Youth Society Executive'))}
                 </span>
               </div>
 
