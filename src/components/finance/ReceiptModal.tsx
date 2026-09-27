@@ -254,7 +254,7 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
       ctx.fillStyle = '#64748b';
       ctx.font = '11px sans-serif';
       ctx.fillText(
-        'ওয়েবসাইট: pys.org.bd | বীরগঞ্জ, দিনাজপুর | স্বচ্ছতা ও জবাবদিহিতায় পলাশবাড়ী ইয়াং সোসাইটি',
+        'ওয়েবসাইট: palashbari-youth-society.vercel.app | বীরগঞ্জ, দিনাজপুর | স্বচ্ছতা ও জবাবদিহিতায় পলাশবাড়ী ইয়াং সোসাইটি',
         width / 2,
         height - 44
       );
@@ -462,11 +462,19 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
             </div>
 
             {/* Bottom Footer Note */}
-            <div className="mt-5 pt-3 border-t border-slate-100 text-center text-[10px] text-slate-400">
-              {t(
-                'এই রসিদটি পলাশবাড়ী ইয়াং সোসাইটির কেন্দ্রীয় অনলাইন হিসাব সিস্টেম থেকে সরাসরি প্রস্তুতকৃত। যেকোনো যাচাইয়ের জন্য আমাদের অফিশিয়াল ইমেইলে যোগাযোগ করুন।',
-                'This receipt was automatically generated from Palashbari Youth Society central accounting system. For verification, contact our official email.'
-              )}
+            <div className="mt-5 pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-400">
+              <span>
+                {t(
+                  'ওয়েবসাইট: palashbari-youth-society.vercel.app | বীরগঞ্জ, দিনাজপুর',
+                  'Website: palashbari-youth-society.vercel.app | Birganj, Dinajpur'
+                )}
+              </span>
+              <span>
+                {t(
+                  'স্বচ্ছতা ও জবাবদিহিতায় পলাশবাড়ী ইয়াং সোসাইটি',
+                  'Transparency & Accountability • Palashbari Youth Society'
+                )}
+              </span>
             </div>
           </div>
         </div>

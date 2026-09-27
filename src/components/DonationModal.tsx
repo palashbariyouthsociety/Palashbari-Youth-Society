@@ -71,36 +71,53 @@ export default function DonationModal({ isOpen, onClose, activityTitle }: Donati
             <p className="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2.5 text-center">
               {t('অনুমোদিত পেমেন্ট চ্যানেলসমূহ', 'Authorized Payment Channels')}
             </p>
-            <div className="grid grid-cols-2 gap-3.5">
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
               {/* bKash Official Card */}
-              <div className="bg-slate-50 hover:bg-white rounded-2xl p-3.5 sm:p-4 border-2 border-[#e2136e]/20 hover:border-[#e2136e]/60 shadow-xs hover:shadow-md transition-all flex flex-col items-center justify-between text-center group">
-                <div className="h-10 sm:h-12 w-full flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
+              <div className="bg-slate-50 hover:bg-white rounded-2xl p-2.5 sm:p-3.5 border-2 border-[#e2136e]/20 hover:border-[#e2136e]/60 shadow-xs hover:shadow-md transition-all flex flex-col items-center justify-between text-center group">
+                <div className="h-9 sm:h-11 w-full flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/bkash.svg"
                     alt="bKash Logo"
-                    className="h-8 sm:h-9 max-w-[120px] object-contain"
+                    className="h-6 sm:h-8 max-w-[85px] sm:max-w-[105px] object-contain"
                   />
                 </div>
                 <div className="w-full pt-1 border-t border-slate-200/80">
-                  <span className="inline-block text-[11px] font-bold text-[#e2136e] bg-[#e2136e]/10 px-2.5 py-0.5 rounded-full">
+                  <span className="inline-block text-[9.5px] sm:text-[11px] font-bold text-[#e2136e] bg-[#e2136e]/10 px-1.5 sm:px-2 py-0.5 rounded-full leading-tight">
                     {t('ব্যক্তিগত • সেন্ড মানি', 'Personal • Send Money')}
                   </span>
                 </div>
               </div>
 
               {/* Nagad Official Card */}
-              <div className="bg-slate-50 hover:bg-white rounded-2xl p-3.5 sm:p-4 border-2 border-[#f7941d]/20 hover:border-[#f7941d]/60 shadow-xs hover:shadow-md transition-all flex flex-col items-center justify-between text-center group">
-                <div className="h-10 sm:h-12 w-full flex items-center justify-center mb-1.5 group-hover:scale-105 transition-transform">
+              <div className="bg-slate-50 hover:bg-white rounded-2xl p-2.5 sm:p-3.5 border-2 border-[#f7941d]/20 hover:border-[#f7941d]/60 shadow-xs hover:shadow-md transition-all flex flex-col items-center justify-between text-center group">
+                <div className="h-9 sm:h-11 w-full flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src="/nagad.svg"
                     alt="Nagad Logo"
-                    className="h-7 sm:h-8 max-w-[110px] object-contain"
+                    className="h-5 sm:h-7 max-w-[80px] sm:max-w-[95px] object-contain"
                   />
                 </div>
                 <div className="w-full pt-1 border-t border-slate-200/80">
-                  <span className="inline-block text-[11px] font-bold text-[#f7941d] bg-[#f7941d]/10 px-2.5 py-0.5 rounded-full">
+                  <span className="inline-block text-[9.5px] sm:text-[11px] font-bold text-[#f7941d] bg-[#f7941d]/10 px-1.5 sm:px-2 py-0.5 rounded-full leading-tight">
+                    {t('ব্যক্তিগত • সেন্ড মানি', 'Personal • Send Money')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Rocket Official Card */}
+              <div className="bg-slate-50 hover:bg-white rounded-2xl p-2.5 sm:p-3.5 border-2 border-[#8C3494]/20 hover:border-[#8C3494]/60 shadow-xs hover:shadow-md transition-all flex flex-col items-center justify-between text-center group">
+                <div className="h-9 sm:h-11 w-full flex items-center justify-center mb-1 group-hover:scale-105 transition-transform">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/rocket.svg"
+                    alt="Rocket Logo"
+                    className="h-6 sm:h-8 max-w-[80px] sm:max-w-[95px] object-contain"
+                  />
+                </div>
+                <div className="w-full pt-1 border-t border-slate-200/80">
+                  <span className="inline-block text-[9.5px] sm:text-[11px] font-bold text-[#8C3494] bg-[#8C3494]/10 px-1.5 sm:px-2 py-0.5 rounded-full leading-tight">
                     {t('ব্যক্তিগত • সেন্ড মানি', 'Personal • Send Money')}
                   </span>
                 </div>
@@ -119,7 +136,7 @@ export default function DonationModal({ isOpen, onClose, activityTitle }: Donati
                 <span>{t('নির্ধারিত অনুদান নম্বর', 'Official Donation Number')}</span>
               </span>
               <span className="text-amber-300 font-bold bg-white/10 px-2 py-0.5 rounded-full text-[10px]">
-                {t('বিকাশ ও নগদ পার্সোনাল', 'bKash & Nagad Personal')}
+                {t('বিকাশ, নগদ ও রকেট পার্সোনাল', 'bKash, Nagad & Rocket Personal')}
               </span>
             </div>
 
@@ -169,7 +186,7 @@ export default function DonationModal({ isOpen, onClose, activityTitle }: Donati
               <span>{t('অনুদান পাঠানোর নিয়মাবলি:', 'How to send your donation:')}</span>
             </p>
             <ol className="list-decimal list-inside space-y-1.5 text-slate-600 leading-relaxed">
-              <li>{t('আপনার বিকাশ অথবা নগদ অ্যাপে প্রবেশ করুন।', 'Open your bKash or Nagad mobile app.')}</li>
+              <li>{t('আপনার বিকাশ, নগদ অথবা রকেট অ্যাপে প্রবেশ করুন।', 'Open your bKash, Nagad or Rocket mobile app.')}</li>
               <li>{t('“Send Money” (সেন্ড মানি) অপশন নির্বাচন করুন।', 'Select the "Send Money" option.')}</li>
               <li>
                 {t('নম্বর ঘরে লিখুন: ', 'Enter recipient number: ')}

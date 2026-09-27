@@ -979,7 +979,7 @@ export default function RecentActivitiesSection({ isLandingPage = true }: Recent
                         <Heart className="w-3.5 h-3.5 fill-white text-white group-hover:scale-125 transition-transform" />
                         <span>{t('সহযোগিতা / অনুদান দিন', 'Donate / Support')}</span>
                         <span className="text-[10px] bg-black/20 px-1.5 py-0.5 rounded text-white font-medium">
-                          বিকাশ/নগদ
+                          বিকাশ/নগদ/রকেট
                         </span>
                       </button>
                     ) : (
