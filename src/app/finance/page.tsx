@@ -16,6 +16,7 @@ import {
   FileSpreadsheet,
   CheckCircle2,
   AlertCircle,
+  ChevronLeft,
   ChevronRight,
   ShieldCheck,
   Building,
@@ -191,6 +192,22 @@ export default function FinancePage() {
     };
   }, [filteredTransactions]);
 
+  // Pagination state (Max 10 per page, only shown when > 10)
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // Auto-reset page when any filter or search changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [typeFilter, datePreset, startDate, endDate, searchQuery, sortBy]);
+
+  const totalPages = Math.ceil(filteredTransactions.length / ITEMS_PER_PAGE);
+
+  const paginatedTransactions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredTransactions.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredTransactions, currentPage]);
+
   const resetFilters = () => {
     setTypeFilter('all');
     setDatePreset('all');
@@ -198,6 +215,7 @@ export default function FinancePage() {
     setEndDate('');
     setSearchQuery('');
     setSortBy('date-desc');
+    setCurrentPage(1);
   };
 
   return (
@@ -591,7 +609,7 @@ export default function FinancePage() {
         </section>
 
         {/* ADVANCED INTERACTIVE TABLE & CARD DESIGN */}
-        <section aria-label="Transactions Table">
+        <section id="transactions-table" aria-label="Transactions Table">
           {loading ? (
             <div className="bg-white rounded-3xl p-12 text-center border border-slate-200 shadow-sm">
               <RefreshCw className="w-8 h-8 text-blue-600 animate-spin mx-auto mb-3" />
@@ -635,7 +653,7 @@ export default function FinancePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 text-xs sm:text-sm">
-                    {filteredTransactions.map((txn, idx) => {
+                    {paginatedTransactions.map((txn, idx) => {
                       const isIncome = txn.type === 'income';
                       return (
                         <tr
@@ -746,7 +764,7 @@ export default function FinancePage() {
 
               {/* Mobile Responsive Cards View */}
               <div className="md:hidden divide-y divide-slate-100">
-                {filteredTransactions.map((txn, idx) => {
+                {paginatedTransactions.map((txn, idx) => {
                   const isIncome = txn.type === 'income';
                   return (
                     <div key={txn.id + idx} className="p-4 sm:p-5 hover:bg-slate-50/80 transition-colors">
@@ -832,6 +850,112 @@ export default function FinancePage() {
                   );
                 })}
               </div>
+
+              {/* Pagination Controls - Visible when total items > 10 */}
+              {filteredTransactions.length > ITEMS_PER_PAGE && (
+                <div className="p-4 sm:p-5 bg-white border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-4">
+                  {/* Page Range Info */}
+                  <div className="text-xs text-slate-500 font-medium text-center sm:text-left">
+                    {isBn ? (
+                      <span>
+                        প্রদর্শিত হচ্ছে{' '}
+                        <strong className="text-slate-900 font-bold">
+                          {toBengaliNumerals((currentPage - 1) * ITEMS_PER_PAGE + 1)}–
+                          {toBengaliNumerals(
+                            Math.min(currentPage * ITEMS_PER_PAGE, filteredTransactions.length)
+                          )}
+                        </strong>{' '}
+                        (সর্বমোট{' '}
+                        <strong className="text-slate-900 font-bold">
+                          {toBengaliNumerals(filteredTransactions.length)}
+                        </strong>
+                        টি লেনদেনের মধ্যে)
+                      </span>
+                    ) : (
+                      <span>
+                        Showing{' '}
+                        <strong className="text-slate-900 font-bold">
+                          {(currentPage - 1) * ITEMS_PER_PAGE + 1}–
+                          {Math.min(currentPage * ITEMS_PER_PAGE, filteredTransactions.length)}
+                        </strong>{' '}
+                        of{' '}
+                        <strong className="text-slate-900 font-bold">
+                          {filteredTransactions.length}
+                        </strong>{' '}
+                        transactions
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Page Number Buttons */}
+                  <div className="flex items-center gap-1 sm:gap-1.5 flex-wrap justify-center">
+                    {/* Previous Button */}
+                    <button
+                      onClick={() => {
+                        setCurrentPage((prev) => Math.max(1, prev - 1));
+                        document.getElementById('transactions-table')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      disabled={currentPage === 1}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      aria-label={t('পূর্ববর্তী পৃষ্ঠা', 'Previous Page')}
+                    >
+                      <ChevronLeft className="w-4 h-4" />
+                      <span className="hidden sm:inline">{t('পূর্ববর্তী', 'Previous')}</span>
+                    </button>
+
+                    {/* Numbered Page Buttons with Smart Ellipsis */}
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      if (
+                        totalPages > 7 &&
+                        page !== 1 &&
+                        page !== totalPages &&
+                        Math.abs(page - currentPage) > 1
+                      ) {
+                        if (page === 2 || page === totalPages - 1) {
+                          return (
+                            <span key={page} className="px-1 text-slate-400 text-xs select-none">
+                              ...
+                            </span>
+                          );
+                        }
+                        return null;
+                      }
+
+                      const isActive = page === currentPage;
+                      return (
+                        <button
+                          key={page}
+                          onClick={() => {
+                            setCurrentPage(page);
+                            document.getElementById('transactions-table')?.scrollIntoView({ behavior: 'smooth' });
+                          }}
+                          className={`w-8 h-8 rounded-xl text-xs font-bold transition-all ${
+                            isActive
+                              ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
+                              : 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-200'
+                          }`}
+                        >
+                          {isBn ? toBengaliNumerals(page) : page}
+                        </button>
+                      );
+                    })}
+
+                    {/* Next Button */}
+                    <button
+                      onClick={() => {
+                        setCurrentPage((prev) => Math.min(totalPages, prev + 1));
+                        document.getElementById('transactions-table')?.scrollIntoView({ behavior: 'smooth' });
+                      }}
+                      disabled={currentPage === totalPages}
+                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                      aria-label={t('পরবর্তী পৃষ্ঠা', 'Next Page')}
+                    >
+                      <span className="hidden sm:inline">{t('পরবর্তী', 'Next')}</span>
+                      <ChevronRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
 
               {/* Table Footer Summary Bar */}
               <div className="p-4 sm:p-5 bg-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
