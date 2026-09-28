@@ -3,7 +3,6 @@
 import React, { useRef, useState, useEffect } from 'react';
 import {
   X,
-  Printer,
   Download,
   CheckCircle2,
   ShieldCheck,
@@ -61,9 +60,6 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
     : amountToEnglishWords(transaction.amount);
 
   // Native Print Handler
-  const handlePrint = () => {
-    window.print();
-  };
 
   // Canvas Image Download (Zero external dependencies, works across all browsers)
   const handleDownloadImage = async () => {
@@ -289,25 +285,8 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={handlePrint}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs transition-colors"
-              title={t('প্রিন্ট করুন বা PDF হিসেবে সংরক্ষণ করুন', 'Print or Save as PDF')}
-            >
-              <Printer className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{t('প্রিন্ট / PDF', 'Print / PDF')}</span>
-            </button>
-            <button
-              onClick={handleDownloadImage}
-              disabled={downloadingImg}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-semibold shadow-xs transition-colors"
-              title={t('রশিদের ইমেজ ডাউনলোড করুন', 'Download Receipt Image')}
-            >
-              <Download className="w-3.5 h-3.5" />
-              <span>{downloadingImg ? t('তৈরি হচ্ছে...', 'Saving...') : t('ইমেজ ডাউনলোড', 'Download Image')}</span>
-            </button>
-            <button
               onClick={onClose}
-              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors ml-1"
+              className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
               aria-label="Close"
             >
               <X className="w-5 h-5" />
@@ -483,7 +462,7 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
         <div className="p-4 bg-white border-t border-slate-200 flex flex-wrap items-center justify-between gap-3 shrink-0">
           <div className="flex items-center gap-2 text-xs text-slate-500">
             <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-            <span>{t('রশিদটি সরাসরি প্রিন্ট অথবা ইমেজ আকারে সেভ করতে পারবেন।', 'You can print or download this receipt directly.')}</span>
+            <span>{t('রশিদটি ইমেজ আকারে সংরক্ষণ বা ডাউনলোড করতে পারবেন।', 'You can download and save this receipt as an image.')}</span>
           </div>
           <div className="flex items-center gap-2">
             <button

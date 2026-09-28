@@ -766,7 +766,7 @@ export default function FinancePage() {
                               <button
                                 onClick={() => handleOpenReceipt(txn)}
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white text-xs font-bold shadow-xs hover:shadow-md shadow-emerald-500/20 transition-all duration-200"
-                                title={t('মানি রিসিট ডাউনলোড ও প্রিন্ট করুন', 'Download or Print Money Receipt')}
+                                title={t('মানি রিসিট ডাউনলোড করুন', 'Download Money Receipt')}
                               >
                                 <Receipt className="w-3.5 h-3.5" />
                                 <span>{t('রশিদ ডাউনলোড', 'Receipt')}</span>
@@ -869,7 +869,7 @@ export default function FinancePage() {
                           className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-sm hover:shadow-md transition-all active:scale-98"
                         >
                           <Receipt className="w-4 h-4" />
-                          <span>{t('মানি রিসিট ডাউনলোড ও প্রিন্ট করুন', 'Download Money Receipt')}</span>
+                          <span>{t('মানি রিসিট ডাউনলোড করুন', 'Download Money Receipt')}</span>
                         </button>
                       ) : (
                         <div className="flex items-center justify-between text-[11px] text-slate-500 pt-2 border-t border-slate-100">
@@ -1056,8 +1056,8 @@ export default function FinancePage() {
               </h3>
               <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
                 {t(
-                  'যেকোনো অনুদানের জন্য যে কেউ তাৎক্ষণিকভাবে অফিশিয়াল সিলযুক্ত রসিদ পিডিএফ বা ইমেজ আকারে ডাউনলোড ও প্রিন্ট করতে পারেন।',
-                  'Anyone can generate and download officially sealed receipts in PDF or high-resolution PNG format for any donation.'
+                  'যেকোনো অনুদানের জন্য যে কেউ তাৎক্ষণিকভাবে অফিশিয়াল সিলযুক্ত রসিদ ইমেজ আকারে ডাউনলোড করতে পারেন।',
+                  'Anyone can generate and download officially sealed receipts in high-resolution image format for any donation.'
                 )}
               </p>
             </div>

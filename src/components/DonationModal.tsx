@@ -23,8 +23,8 @@ export default function DonationModal({ isOpen, onClose, activityTitle }: Donati
   const { t } = useLang();
   const [copied, setCopied] = useState(false);
 
-  const DONATION_NUMBER = '01740-280693';
-  const RAW_NUMBER = '01740280693';
+  const DONATION_NUMBER = '01308-613575';
+  const RAW_NUMBER = '01308613575';
 
   if (!isOpen) return null;
 
@@ -148,11 +148,10 @@ export default function DonationModal({ isOpen, onClose, activityTitle }: Donati
               <div className="flex items-center gap-1.5 shrink-0">
                 <button
                   onClick={handleCopy}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md ${
-                    copied
-                      ? 'bg-emerald-500 text-white scale-105'
-                      : 'bg-white text-slate-900 hover:bg-slate-100 active:scale-95'
-                  }`}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 shadow-md ${copied
+                    ? 'bg-emerald-500 text-white scale-105'
+                    : 'bg-white text-slate-900 hover:bg-slate-100 active:scale-95'
+                    }`}
                   title="Copy Number"
                 >
                   {copied ? (

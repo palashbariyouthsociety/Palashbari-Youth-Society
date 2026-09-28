@@ -214,7 +214,7 @@ export default function CommitteeSection({ isLandingPage = true }: CommitteeSect
           <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
             {t('কার্যকরী পরিষদ', 'Executive Committee')}{' '}
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-indigo-600 to-amber-600">
-              (২০২৪–২০২৬)
+              {t('(২০২৬–২০২৮)', '(2026–2028)')}
             </span>
           </h2>
 
