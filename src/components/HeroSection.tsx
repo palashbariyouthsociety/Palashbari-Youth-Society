@@ -1,11 +1,14 @@
 'use client';
 
+import { useState } from 'react';
 import Image from 'next/image';
 import { useLang } from '@/context/LanguageContext';
-import { Sparkles, ArrowRight, BookOpen, UserPlus, Calendar, Activity, Users } from 'lucide-react';
+import { Sparkles, ArrowRight, BookOpen, UserPlus, Calendar, Activity, Users, Heart } from 'lucide-react';
+import DonationModal from './DonationModal';
 
 export default function HeroSection() {
   const { t } = useLang();
+  const [donationModalOpen, setDonationModalOpen] = useState(false);
 
   return (
     <section
@@ -83,7 +86,7 @@ export default function HeroSection() {
         </div>
 
         {/* CTA Buttons */}
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 max-w-2xl mx-auto">
+        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 mt-8 max-w-3xl mx-auto">
           <a
             href="https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform"
             target="_blank"
@@ -94,6 +97,15 @@ export default function HeroSection() {
             <span className="whitespace-nowrap">{t('সদস্য হিসেবে নিবন্ধন করুন', 'Register as Member')}</span>
             <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform shrink-0" />
           </a>
+
+          <button
+            onClick={() => setDonationModalOpen(true)}
+            className="group w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-[#e2136e] to-[#f7941d] hover:brightness-105 text-white font-bold text-sm sm:text-base rounded-full shadow-lg shadow-pink-500/25 border border-pink-400/30 transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 whitespace-nowrap"
+          >
+            <Heart className="w-4 h-4 fill-white text-white shrink-0 animate-pulse" />
+            <span className="whitespace-nowrap">{t('অনুদান পাঠান', 'Donate Fund')}</span>
+          </button>
+
           <a
             href="#about"
             className="w-full sm:w-auto px-7 py-3.5 rounded-full border border-slate-300 hover:border-slate-400 bg-white hover:bg-slate-50 text-slate-700 font-semibold text-sm sm:text-base transition-all duration-300 hover:scale-[1.02] shadow-sm flex items-center justify-center gap-2.5 whitespace-nowrap"
@@ -151,6 +163,12 @@ export default function HeroSection() {
           })}
         </div>
       </div>
+
+      <DonationModal 
+        isOpen={donationModalOpen} 
+        onClose={() => setDonationModalOpen(false)} 
+        activityTitle="পলাশবাড়ী ইয়াং সোসাইটি সাধারণ মানবকল্যাণ তহবিল"
+      />
     </section>
   );
 }

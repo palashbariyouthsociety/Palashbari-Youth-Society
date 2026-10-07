@@ -1,0 +1,53 @@
+--- src/components/HeroSection.tsx
++++ src/components/HeroSection.tsx
+@@ -1,9 +1,12 @@
+ 'use client';
+ 
++import { useState } from 'react';
+ import Image from 'next/image';
+ import { useLang } from '@/context/LanguageContext';
+-import { Sparkles, ArrowRight, BookOpen, UserPlus, Calendar, Activity, Users } from 'lucide-react';
++import { Sparkles, ArrowRight, BookOpen, UserPlus, Calendar, Activity, Users, Heart } from 'lucide-react';
++import DonationModal from './DonationModal';
+ 
+ export default function HeroSection() {
+   const { t } = useLang();
++  const [donationModalOpen, setDonationModalOpen] = useState(false);
+ 
+   return (
+@@ -83,8 +86,18 @@
+         </div>
+ 
+         {/* CTA Buttons */}
+-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-6 max-w-2xl mx-auto">
++        <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-4 mt-6 max-w-3xl mx-auto">
++          <button
++            onClick={() => setDonationModalOpen(true)}
++            className="group w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-[#e2136e] to-[#f7941d] hover:brightness-110 text-white font-extrabold text-base sm:text-lg rounded-full shadow-xl shadow-pink-500/30 border border-pink-400/30 transition-all duration-300 hover:scale-[1.03] active:scale-95 flex items-center justify-center gap-2.5 whitespace-nowrap"
++          >
++            <Heart className="w-5 h-5 fill-white text-white group-hover:scale-110 transition-transform" />
++            <span className="whitespace-nowrap tracking-wide">{t('অনুদান পাঠান', 'Donate Now')}</span>
++          </button>
++          
+           <a
+             href="https://docs.google.com/forms/d/e/1FAIpQLSepz2DFB9DiUsPE60qgl3eiWEFAd9OP-n3jHXWtE4MQhinKiw/viewform"
+             target="_blank"
+             rel="noopener noreferrer"
+-            className="group w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-blue-600 via-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm sm:text-base rounded-full shadow-lg shadow-blue-500/25 border border-blue-400/30 transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 whitespace-nowrap"
++            className="group w-full sm:w-auto px-7 py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-sm sm:text-base rounded-full shadow-lg shadow-blue-500/25 border border-blue-400/30 transition-all duration-300 hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2.5 whitespace-nowrap"
+           >
+             <UserPlus className="w-4 h-4 text-amber-300 shrink-0" />
+@@ -150,6 +163,12 @@
+             );
+           })}
+         </div>
+       </div>
++
++      <DonationModal 
++        isOpen={donationModalOpen} 
++        onClose={() => setDonationModalOpen(false)} 
++        activityTitle="পলাশবাড়ী ইয়াং সোসাইটি সাধারণ মানবকল্যাণ তহবিল"
++      />
+     </section>
+   );
+ }
