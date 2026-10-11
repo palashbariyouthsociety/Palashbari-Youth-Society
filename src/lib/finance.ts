@@ -209,9 +209,10 @@ export function parseFinanceCSV(csvText: string): Transaction[] {
   const amountIdx = getColIndex(['ammount', 'amount', 'টাকা', 'পরিমাণ', 'মূল্য']);
 
   // Optional columns
-  const descIdx = getColIndex(['description', 'বিবরণ', 'note', 'মন্তব্য', 'উদ্দেশ্য', 'purpose']);
+  const descIdx = getColIndex(['description', 'বিবরণ', 'খাত ও বিবরণ', 'note', 'মন্তব্য', 'উদ্দেশ্য', 'purpose']);
   const catIdx = getColIndex(['category', 'খাত', 'ক্যাটাগরি']);
   const donorIdx = getColIndex(['donor', 'payer', 'recipient', 'দাতা', 'গ্রহীতা', 'নাম', 'name']);
+  const addressIdx = getColIndex(['address', 'ঠিকানা', 'গ্রাম', 'বাসা', 'location', 'স্থান']);
   const methodIdx = getColIndex(['method', 'মাধ্যম', 'পেমেন্ট মাধ্যম', 'payment method']);
 
   const transactions: Transaction[] = [];
@@ -244,9 +245,9 @@ export function parseFinanceCSV(csvText: string): Transaction[] {
 
     const parsedDate = parseTransactionDate(rawDate);
 
-    // Smart default descriptions
-    let description = descIdx >= 0 && row[descIdx] ? row[descIdx] : '';
-    let category = catIdx >= 0 && row[catIdx] ? row[catIdx] : '';
+    // Smart dynamic description & category (খাত ও বিবরণ)
+    let description = descIdx >= 0 && row[descIdx] ? row[descIdx].trim() : '';
+    let category = catIdx >= 0 && row[catIdx] ? row[catIdx].trim() : '';
 
     if (!description) {
       description =
@@ -256,16 +257,33 @@ export function parseFinanceCSV(csvText: string): Transaction[] {
     }
 
     if (!category) {
-      category = type === 'income' ? 'অনুদান ও চাঁদা' : 'সাংগঠনিক পরিচালনা';
+      // Derive category intelligently based on dynamic description
+      const descLower = description.toLowerCase();
+      if (descLower.includes('সাউন্ড বক্স')) {
+        category = 'সাউন্ড বক্স তহবিল';
+      } else if (descLower.includes('মসজিদ') || descLower.includes('রেক')) {
+        category = 'মসজিদ উন্নয়ন প্রকল্প';
+      } else if (descLower.includes('মাসিক') || descLower.includes('onudan') || descLower.includes('anudan')) {
+        category = 'মাসিক চাঁদা ও অনুদান';
+      } else if (descLower.includes('মাদ্রাসা')) {
+        category = 'মাদ্রাসা অনুদান';
+      } else {
+        category = type === 'income' ? 'অনুদান ও চাঁদা' : 'সাংগঠনিক পরিচালনা';
+      }
     }
 
-    const rawDonor = donorIdx >= 0 && row[donorIdx] ? row[donorIdx].trim() : '';
+    let rawDonor = donorIdx >= 0 && row[donorIdx] ? row[donorIdx].trim() : '';
+    rawDonor = rawDonor.replace(/\s*-\s*$/, '').trim();
+
     const donorOrRecipient =
       rawDonor.length > 0
         ? rawDonor
         : type === 'income'
         ? 'সম্মানিত সদস্য / শুভানুধ্যায়ী'
         : 'পলাশবাড়ী ইয়াং সোসাইটি কার্যনির্বাহী';
+
+    const rawAddress = addressIdx >= 0 && row[addressIdx] ? row[addressIdx].trim() : '';
+    const address = rawAddress.length > 0 ? rawAddress : '';
 
     const method = methodIdx >= 0 && row[methodIdx] ? row[methodIdx] : 'নগদ / ডিজিটাল ক্যাশ';
 
@@ -278,6 +296,7 @@ export function parseFinanceCSV(csvText: string): Transaction[] {
       description: description.trim(),
       category: category.trim(),
       donorOrRecipient: donorOrRecipient.trim(),
+      address: address.trim(),
       method: method.trim(),
     });
   }
@@ -321,7 +340,7 @@ export function calculateFinanceSummary(transactions: Transaction[]): FinanceSum
 
 export const FALLBACK_TRANSACTIONS: Transaction[] = [
   {
-    id: 'TNX2026001',
+    id: 'TNX2026016',
     date: '9/27/2026',
     parsedDate: {
       year: 2026,
@@ -333,14 +352,35 @@ export const FALLBACK_TRANSACTIONS: Transaction[] = [
       rawIso: '2026-09-27',
     },
     type: 'income',
-    amount: 100,
-    description: 'সাধারণ তহবিল অনুদান ও সদস্য চাঁদা',
-    category: 'সদস্য চাঁদা ও অনুদান',
-    donorOrRecipient: 'সম্মানিত সদস্য / শুভানুধ্যায়ী',
+    amount: 500,
+    description: 'মাদ্রাসার সাউন্ড বক্সের অনুদান',
+    category: 'সাউন্ড বক্স তহবিল',
+    donorOrRecipient: 'নাহিদ ইসলাম',
+    address: '',
     method: 'নগদ / বিকাশ',
   },
   {
-    id: 'TNX2026002',
+    id: 'DJ99NI52PL',
+    date: '10/9/2026',
+    parsedDate: {
+      year: 2026,
+      month: 10,
+      day: 9,
+      timestamp: new Date(2026, 9, 9).getTime(),
+      formattedBn: '৯ অক্টোবর, ২০২৬',
+      formattedEn: '9 Oct, 2026',
+      rawIso: '2026-10-09',
+    },
+    type: 'income',
+    amount: 150,
+    description: 'মাসিক অনুদান',
+    category: 'মাসিক চাঁদা ও অনুদান',
+    donorOrRecipient: 'বাপ্পি',
+    address: 'ছোট মসজিদ',
+    method: 'নগদ / বিকাশ',
+  },
+  {
+    id: 'TNX2026022',
     date: '9/27/2026',
     parsedDate: {
       year: 2026,
@@ -352,29 +392,11 @@ export const FALLBACK_TRANSACTIONS: Transaction[] = [
       rawIso: '2026-09-27',
     },
     type: 'expense',
-    amount: 80,
-    description: 'মাঠপর্যায়ের কার্যক্রম ও স্টেশনারি সামগ্রী',
-    category: 'কার্যক্রম ও ইভেন্ট',
-    donorOrRecipient: 'বীরগঞ্জ ভেন্ডর / স্টেশনারি',
-    method: 'অফিসিয়াল খরচ',
-  },
-  {
-    id: 'TNX20260003',
-    date: '9/28/2026',
-    parsedDate: {
-      year: 2026,
-      month: 9,
-      day: 28,
-      timestamp: new Date(2026, 8, 28).getTime(),
-      formattedBn: '২৮ সেপ্টেম্বর, ২০২৬',
-      formattedEn: '28 Sep, 2026',
-      rawIso: '2026-09-28',
-    },
-    type: 'expense',
-    amount: 20,
-    description: 'দাপ্তরিক ও যোগাযোগ সংক্রান্ত খরচ',
-    category: 'দাপ্তরিক ও যোগাযোগ',
-    donorOrRecipient: 'অফিস ব্যবস্থাপনা',
+    amount: 5800,
+    description: 'মাদ্রাসার সাউন্ড বক্সের অনুদান',
+    category: 'সাউন্ড বক্স তহবিল',
+    donorOrRecipient: 'পলাশবাড়ী ইয়াং সোসাইটি কার্যনির্বাহী',
+    address: '',
     method: 'অফিসিয়াল খরচ',
   },
 ];

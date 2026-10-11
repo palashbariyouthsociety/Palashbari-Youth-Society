@@ -156,12 +156,13 @@ export default function FinancePage() {
           const matchesCat = txn.category.toLowerCase().includes(q);
           const matchesAmount = String(txn.amount).includes(q);
           const matchesDonor = (txn.donorOrRecipient || '').toLowerCase().includes(q);
+          const matchesAddress = (txn.address || '').toLowerCase().includes(q);
           const matchesDate =
             txn.parsedDate.formattedBn.toLowerCase().includes(q) ||
             txn.parsedDate.formattedEn.toLowerCase().includes(q) ||
             txn.date.toLowerCase().includes(q);
 
-          if (!matchesId && !matchesDesc && !matchesCat && !matchesAmount && !matchesDonor && !matchesDate) {
+          if (!matchesId && !matchesDesc && !matchesCat && !matchesAmount && !matchesDonor && !matchesAddress && !matchesDate) {
             return false;
           }
         }
@@ -697,7 +698,7 @@ export default function FinancePage() {
                             </div>
                           </td>
 
-                          {/* 3. Donor / Recipient Name */}
+                          {/* 3. Donor / Recipient Name & Address */}
                           <td className="py-3.5 px-3 xl:px-4 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <div
@@ -708,11 +709,18 @@ export default function FinancePage() {
                                 <User className="w-3 h-3" />
                               </div>
                               <div className="min-w-0">
-                                <p className="font-bold text-slate-900 text-xs xl:text-sm truncate max-w-[110px] xl:max-w-[150px]" title={txn.donorOrRecipient}>
+                                <p className="font-bold text-slate-900 text-xs xl:text-sm truncate max-w-[120px] xl:max-w-[160px]" title={txn.donorOrRecipient}>
                                   {txn.donorOrRecipient}
                                 </p>
-                                <p className="text-[10px] text-slate-500 font-medium">
-                                  {isIncome ? t('দাতা (Donor)', 'Donor') : t('গ্রহীতা (Payee)', 'Payee')}
+                                <p className="text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                                  <span>{isIncome ? t('দাতা', 'Donor') : t('গ্রহীতা', 'Payee')}</span>
+                                  <span className="text-slate-300">•</span>
+                                  <span
+                                    className={txn.address ? "text-blue-600 font-semibold truncate max-w-[100px]" : "text-slate-400 italic"}
+                                    title={txn.address ? `${t('ঠিকানা:', 'Address:')} ${txn.address}` : t('ঠিকানা: Not Assigned', 'Address: Not Assigned')}
+                                  >
+                                    {txn.address ? txn.address : t('Not Assigned', 'Not Assigned')}
+                                  </span>
                                 </p>
                               </div>
                             </div>
@@ -721,11 +729,11 @@ export default function FinancePage() {
                           {/* 4. Category & Description */}
                           <td className="py-3.5 px-3 xl:px-4">
                             <div className="mb-0.5">
-                              <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                              <span className="inline-block px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
                                 {txn.category}
                               </span>
                             </div>
-                            <p className="font-semibold text-slate-900 text-xs xl:text-sm truncate max-w-[140px] xl:max-w-[200px]" title={txn.description}>
+                            <p className="font-bold text-slate-900 text-xs xl:text-sm truncate max-w-[160px] xl:max-w-[240px]" title={txn.description}>
                               {txn.description}
                             </p>
                             <p className="text-[10px] text-slate-400 truncate">
@@ -823,21 +831,29 @@ export default function FinancePage() {
                         )}
                       </div>
 
-                      {/* Donor / Recipient Row */}
-                      <div className="flex items-center gap-1.5 text-xs text-slate-700 mb-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
-                        <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                        <span className="text-slate-500 font-medium">
-                          {isIncome ? t('দাতা:', 'Donor:') : t('গ্রহীতা:', 'Payee:')}
-                        </span>
-                        <span className="font-bold text-slate-900 truncate">
-                          {txn.donorOrRecipient}
-                        </span>
+                      {/* Donor / Recipient & Address Row */}
+                      <div className="flex flex-col gap-1 text-xs text-slate-700 mb-2.5 p-2 rounded-xl bg-slate-50 border border-slate-100">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <User className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                          <span className="text-slate-500 font-medium shrink-0">
+                            {isIncome ? t('দাতা:', 'Donor:') : t('গ্রহীতা:', 'Payee:')}
+                          </span>
+                          <span className="font-bold text-slate-900 truncate">
+                            {txn.donorOrRecipient}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1.5 pl-5 text-[11px]">
+                          <span className="text-slate-500">{t('ঠিকানা:', 'Address:')}</span>
+                          <span className={txn.address ? "text-blue-600 font-semibold truncate" : "text-slate-400 italic"}>
+                            {txn.address ? txn.address : t('নির্ধারিত নয় (Not Assigned)', 'Not Assigned')}
+                          </span>
+                        </div>
                       </div>
 
                       {/* Main Details: Category, Description, Amount */}
                       <div className="flex items-start justify-between gap-3 mb-3">
                         <div className="flex-1 min-w-0">
-                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 mb-1">
+                          <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 mb-1">
                             {txn.category}
                           </span>
                           <h4 className="text-sm font-bold text-slate-900 leading-snug">

@@ -12,6 +12,7 @@ import {
   User,
   FileText,
   BadgeCheck,
+  MapPin,
 } from 'lucide-react';
 import { Transaction } from '@/types/finance';
 import {
@@ -168,12 +169,17 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
         ctx.fillText(value, 260, y + 3);
       };
 
-      drawRow(275, 'দাতা / গ্রহীতার নাম (Name):', transaction.donorOrRecipient || 'সম্মানিত সদস্য / শুভানুধ্যায়ী');
-      drawRow(315, 'লেনদেনের ধরন / Type:', 'প্রাপ্ত অনুদান / সাধারণ তহবিলে জমা (Income)');
-      drawRow(355, 'খাত ও ক্যাটাগরি / Category:', transaction.category || 'সদস্য চাঁদা ও সাধারণ অনুদান');
-      drawRow(395, 'বিবরণ / Description:', transaction.description || 'সংগঠনের জনকল্যাণমূলক তহবিল');
-      drawRow(435, 'পেমেন্ট মাধ্যম / Method:', transaction.method || 'নগদ / ডিজিটাল লেনদেন');
-      drawRow(475, 'গৃহীত পরিমাণ / Amount:', `${formattedAmount} (${wordsAmount})`, true);
+      const displayAddress = transaction.address && transaction.address.trim().length > 0
+        ? transaction.address.trim()
+        : 'Not Assigned';
+      const displayDesc = transaction.description || 'সাধারণ অনুদান ও সদস্য চাঁদা';
+
+      drawRow(265, 'দাতা / গ্রহীতার নাম (Name):', transaction.donorOrRecipient || 'সম্মানিত সদস্য / শুভানুধ্যায়ী');
+      drawRow(305, 'ঠিকানা / Address:', displayAddress);
+      drawRow(345, 'খাত ও বিবরণ / Description:', displayDesc);
+      drawRow(385, 'ক্যাটাগরি / Category:', transaction.category || 'সাধারণ অনুদান');
+      drawRow(425, 'পেমেন্ট মাধ্যম / Method:', transaction.method || 'নগদ / ডিজিটাল লেনদেন');
+      drawRow(465, 'গৃহীত পরিমাণ / Amount:', `${formattedAmount} (${wordsAmount})`, true);
 
       // Seal / Verification Stamp
       ctx.textAlign = 'center';
@@ -349,7 +355,7 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
             </div>
 
             {/* Receipt Details Body */}
-            <div className="py-5 space-y-3.5 text-xs sm:text-sm">
+            <div className="py-5 space-y-3 text-xs sm:text-sm">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 font-medium flex items-center gap-1.5">
                   <User className="w-3.5 h-3.5 text-blue-600" />
@@ -365,24 +371,35 @@ export default function ReceiptModal({ transaction, isOpen, onClose }: ReceiptMo
                 </span>
               </div>
 
+              {/* Address Field */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 font-medium flex items-center gap-1.5">
-                  <Building2 className="w-3.5 h-3.5 text-slate-400" />
-                  {t('লেনদেনের খাত / ক্যাটাগরি:', 'Category / Head:')}
+                  <MapPin className="w-3.5 h-3.5 text-blue-600" />
+                  {t('ঠিকানা / Address:', 'Address:')}
                 </span>
-                <span className="font-semibold text-slate-800 sm:text-right">
-                  {transaction.category}
+                <span className={`font-semibold sm:text-right text-sm ${transaction.address ? 'text-slate-900' : 'text-slate-400 italic'}`}>
+                  {transaction.address
+                    ? transaction.address
+                    : t('নির্ধারিত নয় (Not Assigned)', 'Not Assigned')}
                 </span>
               </div>
 
+              {/* Dynamic Description & Category (খাত ও বিবরণ) */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 font-medium flex items-center gap-1.5">
                   <FileText className="w-3.5 h-3.5 text-slate-400" />
-                  {t('বিবরণ ও উদ্দেশ্য:', 'Description / Purpose:')}
+                  {t('খাত ও বিবরণ:', 'Category & Description:')}
                 </span>
-                <span className="font-medium text-slate-700 sm:text-right">
-                  {transaction.description}
-                </span>
+                <div className="sm:text-right flex items-center gap-2 justify-end flex-wrap">
+                  <span className="font-bold text-slate-900 text-sm">
+                    {transaction.description}
+                  </span>
+                  {transaction.category && (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">
+                      {transaction.category}
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 p-2.5 rounded-xl bg-slate-50 border border-slate-100">

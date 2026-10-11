@@ -19,6 +19,7 @@ export interface Transaction {
   description: string;
   category: string;
   donorOrRecipient?: string;
+  address?: string;
   method?: string;
   notes?: string;
 }
